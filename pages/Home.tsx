@@ -5,7 +5,7 @@ import Header from "../components/Header";
 const Home = ({navigation}: any) => {
     return (
         <View>
-            <Header />
+            <Header navigation={navigation}/>
 
             <Text>Dupa</Text>
 

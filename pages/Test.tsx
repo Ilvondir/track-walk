@@ -5,11 +5,12 @@ import Header from "../components/Header";
 const Test = ({navigation}: any) => {
     return (
         <View>
-            <Header/>
+            <Header navigation={navigation}/>
 
             <Text>Dupa2</Text>
 
             <TouchableOpacity
+
                 style={{margin: 100}}
                 onPress={() => navigation.goBack()}
             >
