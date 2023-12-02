@@ -1,17 +1,19 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
-import {faHome, faStopwatch} from "@fortawesome/free-solid-svg-icons";
+import {faChartBar, faHome, faStopwatch} from "@fortawesome/free-solid-svg-icons";
+import {useRoute} from "@react-navigation/native";
 
 const Navbar = (props: { navigation: any }) => {
     const navigation = props.navigation;
+    const route = useRoute();
 
     return (
         <View style={styles.navbar}>
 
             <TouchableOpacity
                 activeOpacity={0.6}
-                style={styles.link}
+                style={[styles.link, route.name == "Home" ? {opacity: 1} : {opacity: 0.7}]}
                 onPress={() => navigation.navigate("Home")}
             >
                 <FontAwesomeIcon
@@ -28,7 +30,24 @@ const Navbar = (props: { navigation: any }) => {
 
             <TouchableOpacity
                 activeOpacity={0.6}
-                style={styles.link}
+                style={[styles.link, route.name == "Stats" ? {opacity: 1} : {opacity: 0.7}]}
+                onPress={() => navigation.navigate("Stats")}
+            >
+                <FontAwesomeIcon
+                    style={styles.text}
+                    icon={faChartBar}
+                    size={20}
+                />
+
+                <Text style={[styles.text, {marginTop: "2%"}]}>
+                    Stats
+                </Text>
+
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                activeOpacity={0.6}
+                style={[styles.link, route.name == "Tracking" ? {opacity: 1} : {opacity: 0.7}]}
                 onPress={() => navigation.navigate("Tracking")}
             >
                 <FontAwesomeIcon
@@ -57,7 +76,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
     },
     link: {
-        width: "50%",
+        width: "33.3%",
         justifyContent: "center",
         alignItems: "center",
         color: "white"

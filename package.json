@@ -20,7 +20,10 @@
     "react-native": "0.72.6",
     "react-native-svg": "^14.0.0",
     "react-native-torch": "^1.2.0",
-    "expo-camera": "~13.4.4"
+    "expo-camera": "~13.4.4",
+    "expo-sqlite": "~11.3.3",
+    "react-native-maps": "1.7.1",
+    "expo-location": "~16.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
