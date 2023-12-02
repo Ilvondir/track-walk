@@ -22,6 +22,7 @@ export default Wrapper;
 const styles = StyleSheet.create({
     container: {
         width: "100%",
+        maxHeight: "100%",
         height: "100%",
         flexDirection: "column"
     }
