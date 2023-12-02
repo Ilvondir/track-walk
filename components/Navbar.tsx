@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
-import {faHome, faStopwatch} from "@fortawesome/free-solid-svg-icons";
+import {faChartBar, faHome, faStopwatch} from "@fortawesome/free-solid-svg-icons";
 
 const Navbar = (props: { navigation: any }) => {
     const navigation = props.navigation;
@@ -22,6 +22,23 @@ const Navbar = (props: { navigation: any }) => {
 
                 <Text style={[styles.text, {marginTop: "2%"}]}>
                     Home
+                </Text>
+
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                activeOpacity={0.6}
+                style={styles.link}
+                onPress={() => navigation.navigate("Stats")}
+            >
+                <FontAwesomeIcon
+                    style={styles.text}
+                    icon={faChartBar}
+                    size={20}
+                />
+
+                <Text style={[styles.text, {marginTop: "2%"}]}>
+                    Stats
                 </Text>
 
             </TouchableOpacity>
@@ -57,7 +74,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
     },
     link: {
-        width: "50%",
+        width: "33.3%",
         justifyContent: "center",
         alignItems: "center",
         color: "white"

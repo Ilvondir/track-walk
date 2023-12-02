@@ -2,6 +2,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from "./pages/Home";
 import Tracking from "./pages/Tracking";
+import Stats from "./pages/Stats";
 
 const Stack = createNativeStackNavigator();
 
@@ -13,6 +14,7 @@ const App = () => {
                 screenOptions={{headerShown: false}}
             >
                 <Stack.Screen name="Home" component={Home}/>
+                <Stack.Screen name="Stats" component={Stats}/>
                 <Stack.Screen name="Tracking" component={Tracking}/>
             </Stack.Navigator>
         </NavigationContainer>
