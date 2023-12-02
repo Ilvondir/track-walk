@@ -16,7 +16,6 @@ const Tracking = ({navigation}: any) => {
     const [lastMarker, setLastMarker] = useState(new Point() as Point);
     const [position, setPosition] = useState(1 as number);
     const [inWork, setInWork] = useState(false as boolean);
-    let sub = null as any;
 
     useEffect(() => {
 
@@ -30,33 +29,48 @@ const Tracking = ({navigation}: any) => {
     const start = () => {
 
         Location.requestForegroundPermissionsAsync()
-            .then(suc => {
+            .then(suc2 => {
 
                 Location.getCurrentPositionAsync()
                     .then(suc => {
-                        console.log(suc);
+                        // console.log(suc);
                         setCurrentPosition(suc.coords);
+
                         if (map.current)
                             map.current.animateToRegion({
                                 latitudeDelta: .009, longitudeDelta: .009,
                                 latitude: suc.coords.latitude,
                                 longitude: suc.coords.longitude
                             });
+
                         const first = new Point(0, position, suc.coords.longitude, suc.coords.latitude, 0);
                         const activity = new Activity(0, new Date().toISOString(), "");
 
                         setActiv(activity);
                         setInWork(true);
                         setLastMarker(first);
-                        setMarkers([...markers, first] as Point[]);
+                        setMarkers([first]);
+                        markers.map((p: any) => console.log(p.position))
                         setPosition(position + 1);
 
-                        sub = Location.watchPositionAsync({
-                            accuracy: Location.Accuracy.High,
-                            timeInterval: 3000
+                        Location.watchPositionAsync({
+                            accuracy: Location.Accuracy.High
                         }, (loc) => {
-                            setCurrentPosition(loc.coords as any);
+                            // console.log(loc);
 
+                            const dist = distance(loc.coords, lastMarker);
+
+                            console.log(dist);
+
+                            if (dist > 10) {
+                                const nP = new Point(0, position, loc.coords.longitude, loc.coords.latitude, 0);
+
+                                setPosition(position + 1);
+                                setMarkers([...markers, nP])
+                                setLastMarker(nP);
+                            }
+
+                            setCurrentPosition(loc.coords as any);
 
                         })
                             .then(() => {
@@ -66,11 +80,33 @@ const Tracking = ({navigation}: any) => {
             })
     }
 
+    const distance = (m1: any, m2: Point) => {
+        let lat1 = m1.latitude;
+        let lon1 = m1.longitude
+        let lat2 = m2.latitude;
+        let lon2 = m2.longitude;
+        const earthRadius = 6371;
+
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) *
+            Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = (earthRadius * c) * 1000;
+
+        return distance;
+    }
 
     const stop = () => {
         setInWork(false);
 
-        setMarkers([...markers, new Point(0, position, currentPosition.longitude, currentPosition.latitude, 0)]);
+        markers.push(new Point(0, position, currentPosition.longitude, currentPosition.latitude, 0));
 
         const db = SQLite.openDatabase("trackwalk");
 
