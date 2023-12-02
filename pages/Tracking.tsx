@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import Wrapper from "../components/Wrapper";
 import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
-import MapView, {Marker} from "react-native-maps";
+import MapView, {Polyline} from "react-native-maps";
 import * as Location from 'expo-location'
 import {Point} from "../models/Point";
 import {Activity} from "../models/Activity";
@@ -68,7 +68,7 @@ const Tracking = ({navigation}: any) => {
 
                                 console.log(dist);
 
-                                if (dist > 10) {
+                                if (dist > 0) {
                                     const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
 
                                     pointNum++;
@@ -164,17 +164,28 @@ const Tracking = ({navigation}: any) => {
                     style={styles.map}
                     showsUserLocation={true}
                 >
-                    {markers.map((p: Point) => {
-                        return (
-                            <Marker
-                                key={p.num}
-                                coordinate={{
-                                    latitude: p.latitude,
-                                    longitude: p.longitude
-                                }}
-                                title={String(p.num)}
-                            />
-                        );
+                    {markers.map((p: Point, i: number) => {
+                        if (i > 0) {
+                            const prevPoint = markers[i - 1];
+                            return (
+                                <Polyline
+                                    key={i}
+                                    coordinates={[
+                                        {
+                                            latitude: prevPoint.latitude,
+                                            longitude: prevPoint.longitude,
+                                        },
+                                        {
+                                            latitude: p.latitude,
+                                            longitude: p.longitude,
+                                        },
+                                    ]}
+                                    strokeWidth={4}
+                                    strokeColor={"#FF474C"}
+                                    strokeColors={["#FF474C"]}
+                                />
+                            );
+                        }
                     })}
                 </MapView>
 

@@ -3,7 +3,6 @@ import {ScrollView, Text} from "react-native";
 import Wrapper from "../components/Wrapper";
 import * as SQLite from 'expo-sqlite';
 
-
 const Home = ({navigation}: any) => {
     const db = SQLite.openDatabase("trackwalk");
     const [result, setResult] = useState("" as any);
