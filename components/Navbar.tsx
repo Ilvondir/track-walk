@@ -2,16 +2,18 @@ import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faChartBar, faHome, faStopwatch} from "@fortawesome/free-solid-svg-icons";
+import {useRoute} from "@react-navigation/native";
 
 const Navbar = (props: { navigation: any }) => {
     const navigation = props.navigation;
+    const route = useRoute();
 
     return (
         <View style={styles.navbar}>
 
             <TouchableOpacity
                 activeOpacity={0.6}
-                style={styles.link}
+                style={[styles.link, route.name == "Home" ? {opacity: 1} : {opacity: 0.7}]}
                 onPress={() => navigation.navigate("Home")}
             >
                 <FontAwesomeIcon
@@ -28,7 +30,7 @@ const Navbar = (props: { navigation: any }) => {
 
             <TouchableOpacity
                 activeOpacity={0.6}
-                style={styles.link}
+                style={[styles.link, route.name == "Stats" ? {opacity: 1} : {opacity: 0.7}]}
                 onPress={() => navigation.navigate("Stats")}
             >
                 <FontAwesomeIcon
@@ -45,7 +47,7 @@ const Navbar = (props: { navigation: any }) => {
 
             <TouchableOpacity
                 activeOpacity={0.6}
-                style={styles.link}
+                style={[styles.link, route.name == "Tracking" ? {opacity: 1} : {opacity: 0.7}]}
                 onPress={() => navigation.navigate("Tracking")}
             >
                 <FontAwesomeIcon

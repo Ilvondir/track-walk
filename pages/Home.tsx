@@ -9,20 +9,37 @@ const Home = ({navigation}: any) => {
     const [result, setResult] = useState("" as any);
 
     useEffect(() => {
+
+        // db.transaction((tx: any) => {
+        //     tx.executeSql("DROP TABLE markers");
+        // });
+        //
+        // db.transaction((tx: any) => {
+        //     tx.executeSql("DROP TABLE activities");
+        // });
+
         db.transaction((tx: any) => {
-            tx.executeSql("CREATE TABLE IF NOT EXISTS activities (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, start TEXT, end TEXT)",
-                null,
-                (txObj: any, resultSet: any) => console.log(resultSet),
-                (txObj: any, error: any) => console.error(error)
-            );
+            tx.executeSql("CREATE TABLE IF NOT EXISTS activities (id INTEGER PRIMARY KEY AUTOINCREMENT, start TEXT, end TEXT)");
         });
 
         db.transaction((tx: any) => {
-            tx.executeSql("CREATE TABLE IF NOT EXISTS markers (id INTEGER PRIMARY KEY AUTOINCREMENT, position INTEGER, longtitude REAL, altitude REAL, acitivity_id INTEGER, FOREIGN KEY(acitivity_id) REFERENCES activities(id))",
+            tx.executeSql("CREATE TABLE IF NOT EXISTS markers (id INTEGER PRIMARY KEY AUTOINCREMENT, position INTEGER, longitude REAL, latitude REAL, activity_id INTEGER, FOREIGN KEY(activity_id) REFERENCES activities(id))")
+        });
+
+        db.transaction((tx: any) => {
+            tx.executeSql("SELECT * FROM activities",
                 null,
-                (txObj: any, resultSet: any) => console.log(resultSet),
+                (txObj: any, resultSet: any) => console.log(resultSet.rows),
                 (txObj: any, error: any) => console.error(error));
         });
+
+        db.transaction((tx: any) => {
+            tx.executeSql("SELECT * FROM markers",
+                null,
+                (txObj: any, resultSet: any) => console.log(resultSet.rows),
+                (txObj: any, error: any) => console.error(error));
+        });
+
     }, []);
 
     return (

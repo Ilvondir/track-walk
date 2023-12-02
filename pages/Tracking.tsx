@@ -5,6 +5,8 @@ import MapView, {Marker} from "react-native-maps";
 import * as Location from 'expo-location'
 import {Point} from "../models/Point";
 import {Activity} from "../models/Activity";
+import * as SQLite from 'expo-sqlite';
+import {ResultSet} from 'expo-sqlite';
 
 const Tracking = ({navigation}: any) => {
     const map = useRef<MapView>(null);
@@ -13,6 +15,8 @@ const Tracking = ({navigation}: any) => {
     const [markers, setMarkers] = useState([] as Point[]);
     const [lastMarker, setLastMarker] = useState(new Point() as Point);
     const [position, setPosition] = useState(1 as number);
+    const [inWork, setInWork] = useState(false as boolean);
+    let sub = null as any;
 
     useEffect(() => {
 
@@ -22,35 +26,78 @@ const Tracking = ({navigation}: any) => {
 
     }, []);
 
+
     const start = () => {
 
         Location.requestForegroundPermissionsAsync()
             .then(suc => {
 
-                Location.watchPositionAsync({
-                    accuracy: Location.Accuracy.High,
-                    timeInterval: 3000
-                }, (loc) => {
-                    setCurrentPosition(loc.coords as any);
-                    console.log(currentPosition);
-                })
-                    .then(() => {
+                Location.getCurrentPositionAsync()
+                    .then(suc => {
+                        console.log(suc);
+                        setCurrentPosition(suc.coords);
                         if (map.current)
                             map.current.animateToRegion({
-                                latitudeDelta: 1, longitudeDelta: 1,
-                                latitude: lastMarker.latitude,
-                                longitude: lastMarker.longtitude
+                                latitudeDelta: .009, longitudeDelta: .009,
+                                latitude: suc.coords.latitude,
+                                longitude: suc.coords.longitude
                             });
+                        const first = new Point(0, position, suc.coords.longitude, suc.coords.latitude, 0);
+                        const activity = new Activity(0, new Date().toISOString(), "");
 
-                        const first = new Point(0, position, currentPosition.longitude, currentPosition.latitude, 0);
+                        setActiv(activity);
+                        setInWork(true);
                         setLastMarker(first);
                         setMarkers([...markers, first] as Point[]);
-
                         setPosition(position + 1);
-                    })
-                    .catch(err => console.error(err))
 
+                        sub = Location.watchPositionAsync({
+                            accuracy: Location.Accuracy.High,
+                            timeInterval: 3000
+                        }, (loc) => {
+                            setCurrentPosition(loc.coords as any);
+
+
+                        })
+                            .then(() => {
+                            })
+                            .catch(err => console.error(err))
+                    })
             })
+    }
+
+
+    const stop = () => {
+        setInWork(false);
+
+        setMarkers([...markers, new Point(0, position, currentPosition.longitude, currentPosition.latitude, 0)]);
+
+        const db = SQLite.openDatabase("trackwalk");
+
+        let id = 0 as any;
+
+        db.transaction((tx: any) => {
+            tx.executeSql("INSERT INTO activities (start, end) VALUES (?, ?)",
+                [activ.start, new Date().toISOString()],
+                (txObj: any, resultSet: ResultSet) => {
+                    id = resultSet.insertId
+                },
+                (txObj: any, error: any) => console.error(error)
+            );
+        });
+
+        db.transaction((tx: any) => {
+            markers.map((m: Point) => {
+                tx.executeSql("INSERT INTO markers (position, latitude, longitude, activity_id) VALUES (?, ?, ?, ?)",
+                    [m.position, m.latitude, m.longitude, id],
+                    (txObj: any, resultSet: ResultSet) => console.log(resultSet),
+                    (txObj: any, error: any) => console.error(error)
+                );
+            });
+        });
+
+        setPosition(1);
+        setMarkers([]);
     }
 
 
@@ -65,7 +112,6 @@ const Tracking = ({navigation}: any) => {
                     ref={map}
                     style={styles.map}
                     showsUserLocation={true}
-                    followsUserLocation={true}
                 >
                     {markers.map((p: Point) => {
                         return (
@@ -73,24 +119,38 @@ const Tracking = ({navigation}: any) => {
                                 key={p.position}
                                 coordinate={{
                                     latitude: p.latitude,
-                                    longitude: p.longtitude
+                                    longitude: p.longitude
                                 }}
+                                title={String(p.position)}
                             />
                         );
                     })}
                 </MapView>
+                <Text>{currentPosition.latitude} x {currentPosition.longitude}</Text>
 
-                <Text>{currentPosition?.altitude} x {currentPosition?.latitude}</Text>
+                {!inWork &&
+                    <TouchableOpacity
+                        activeOpacity={0.6}
+                        style={styles.button}
+                        onPress={() => start()}
+                    >
+                        <Text style={styles.btext}>
+                            Start tracking
+                        </Text>
+                    </TouchableOpacity>
+                }
 
-                <TouchableOpacity
-                    activeOpacity={0.6}
-                    style={styles.button}
-                    onPress={() => start()}
-                >
-                    <Text style={styles.btext}>
-                        Start tracking
-                    </Text>
-                </TouchableOpacity>
+                {inWork &&
+                    <TouchableOpacity
+                        activeOpacity={0.6}
+                        style={styles.button}
+                        onPress={() => stop()}
+                    >
+                        <Text style={styles.btext}>
+                            Save activity
+                        </Text>
+                    </TouchableOpacity>
+                }
 
 
             </View>
@@ -112,7 +172,8 @@ const styles = StyleSheet.create({
         width: "50%",
         marginStart: "auto",
         marginEnd: "auto",
-        borderRadius: 15
+        borderRadius: 15,
+        marginTop: "3%"
     },
     btext: {
         fontSize: 20,
