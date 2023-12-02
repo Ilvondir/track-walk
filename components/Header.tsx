@@ -11,7 +11,7 @@ const Header = (props: { navigation: any }) => {
 
     const handleFlash = () => {
         Camera.requestCameraPermissionsAsync()
-            .then(suc => {
+            .then(() => {
                 setFlashlight(!flashlight);
             })
             .catch(err => {
@@ -72,7 +72,7 @@ export default Header;
 const styles = StyleSheet.create({
     header: {
         backgroundColor: "#FF474C",
-        height: "9%",
+        height: "8%",
         paddingHorizontal: 15,
         marginTop: 37,
         flexDirection: "row",

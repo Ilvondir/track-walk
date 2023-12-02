@@ -12,6 +12,7 @@ const Wrapper = (props: { navigation: any, children: ReactNode }) => {
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
+                style={styles.main}
             >
                 {props.children}
 
@@ -28,5 +29,8 @@ const styles = StyleSheet.create({
     container: {
         width: "100%",
         height: "100%"
+    },
+    main: {
+        paddingHorizontal: "3%"
     }
 })

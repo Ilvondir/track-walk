@@ -53,7 +53,7 @@ export default Navbar;
 const styles = StyleSheet.create({
     navbar: {
         backgroundColor: "#FF474C",
-        height: "9%",
+        height: "8%",
         flexDirection: "row",
     },
     link: {
