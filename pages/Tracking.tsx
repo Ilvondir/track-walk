@@ -6,22 +6,24 @@ import * as Location from 'expo-location'
 import {Point} from "../models/Point";
 import {Activity} from "../models/Activity";
 import * as SQLite from 'expo-sqlite';
-import {ResultSet} from 'expo-sqlite';
+
+let activ: Activity = new Activity();
+let currentPosition: any = {};
+let lastMarker: Point = new Point();
+let pointNum = 1;
+let handleMarkers: Point[] = [];
+let handleMarkers2: Point[] = [];
+let handleInWork = false;
 
 const Tracking = ({navigation}: any) => {
     const map = useRef<MapView>(null);
-    const [activ, setActiv] = useState(new Activity() as Activity);
-    const [currentPosition, setCurrentPosition] = useState({} as any);
     const [markers, setMarkers] = useState([] as Point[]);
-    const [lastMarker, setLastMarker] = useState(new Point() as Point);
-    const [position, setPosition] = useState(1 as number);
     const [inWork, setInWork] = useState(false as boolean);
 
     useEffect(() => {
 
         Location.requestForegroundPermissionsAsync()
-            .then(suc => {
-            })
+            .catch(() => navigation.navigate("Home"));
 
     }, []);
 
@@ -29,12 +31,13 @@ const Tracking = ({navigation}: any) => {
     const start = () => {
 
         Location.requestForegroundPermissionsAsync()
-            .then(suc2 => {
+            .then(() => {
 
                 Location.getCurrentPositionAsync()
                     .then(suc => {
+
                         // console.log(suc);
-                        setCurrentPosition(suc.coords);
+                        currentPosition = suc.coords;
 
                         if (map.current)
                             map.current.animateToRegion({
@@ -43,34 +46,41 @@ const Tracking = ({navigation}: any) => {
                                 longitude: suc.coords.longitude
                             });
 
-                        const first = new Point(0, position, suc.coords.longitude, suc.coords.latitude, 0);
-                        const activity = new Activity(0, new Date().toISOString(), "");
+                        const first = new Point(0, pointNum, suc.coords.longitude, suc.coords.latitude, 0);
+                        activ.start = new Date().toLocaleString('en-US', {timeZone: "UTC", hour12: false})
 
-                        setActiv(activity);
+                        lastMarker = first;
+                        handleMarkers.push(first);
+                        handleMarkers2.push(first);
+                        setMarkers(handleMarkers);
+
+                        handleInWork = true;
                         setInWork(true);
-                        setLastMarker(first);
-                        setMarkers([first]);
-                        markers.map((p: any) => console.log(p.position))
-                        setPosition(position + 1);
+                        pointNum++;
 
                         Location.watchPositionAsync({
-                            accuracy: Location.Accuracy.High
+                            accuracy: Location.Accuracy.BestForNavigation
                         }, (loc) => {
                             // console.log(loc);
 
-                            const dist = distance(loc.coords, lastMarker);
+                            if (handleInWork) {
+                                const dist = distance(loc.coords, lastMarker);
 
-                            console.log(dist);
+                                console.log(dist);
 
-                            if (dist > 10) {
-                                const nP = new Point(0, position, loc.coords.longitude, loc.coords.latitude, 0);
+                                if (dist > 10) {
+                                    const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
 
-                                setPosition(position + 1);
-                                setMarkers([...markers, nP])
-                                setLastMarker(nP);
+                                    pointNum++;
+                                    handleMarkers.push(nP);
+                                    handleMarkers2.push(nP);
+                                    setMarkers([...handleMarkers]);
+                                    lastMarker = nP;
+                                }
+
+                                currentPosition = loc.coords as any;
+                                console.log(currentPosition);
                             }
-
-                            setCurrentPosition(loc.coords as any);
 
                         })
                             .then(() => {
@@ -98,15 +108,18 @@ const Tracking = ({navigation}: any) => {
             Math.sin(dLon / 2);
 
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = (earthRadius * c) * 1000;
 
-        return distance;
+        return (earthRadius * c) * 1000;
     }
 
     const stop = () => {
+
+        handleInWork = false
         setInWork(false);
 
-        markers.push(new Point(0, position, currentPosition.longitude, currentPosition.latitude, 0));
+        handleMarkers.push(new Point(0, pointNum, currentPosition.longitude, currentPosition.latitude, 0));
+        handleMarkers2.push(new Point(0, pointNum, currentPosition.longitude, currentPosition.latitude, 0));
+        setMarkers(handleMarkers);
 
         const db = SQLite.openDatabase("trackwalk");
 
@@ -114,26 +127,28 @@ const Tracking = ({navigation}: any) => {
 
         db.transaction((tx: any) => {
             tx.executeSql("INSERT INTO activities (start, end) VALUES (?, ?)",
-                [activ.start, new Date().toISOString()],
-                (txObj: any, resultSet: ResultSet) => {
+                [activ.start, new Date().toLocaleString('en-US', {timeZone: "UTC", hour12: false})],
+                (txObj: any, resultSet: any) => {
                     id = resultSet.insertId
                 },
                 (txObj: any, error: any) => console.error(error)
             );
         });
 
-        db.transaction((tx: any) => {
-            markers.map((m: Point) => {
-                tx.executeSql("INSERT INTO markers (position, latitude, longitude, activity_id) VALUES (?, ?, ?, ?)",
-                    [m.position, m.latitude, m.longitude, id],
-                    (txObj: any, resultSet: ResultSet) => console.log(resultSet),
+        handleMarkers2.forEach((m: Point) => {
+            db.transaction((tx: any) => {
+                tx.executeSql("INSERT INTO markers (num, latitude, longitude, activity_id) VALUES (?, ?, ?, ?)",
+                    [m.num, m.latitude, m.longitude, id],
+                    (txObj: any, resultSet: any) => console.log(resultSet),
                     (txObj: any, error: any) => console.error(error)
                 );
             });
         });
 
-        setPosition(1);
+
+        pointNum = 1;
         setMarkers([]);
+        handleMarkers = [];
     }
 
 
@@ -152,17 +167,16 @@ const Tracking = ({navigation}: any) => {
                     {markers.map((p: Point) => {
                         return (
                             <Marker
-                                key={p.position}
+                                key={p.num}
                                 coordinate={{
                                     latitude: p.latitude,
                                     longitude: p.longitude
                                 }}
-                                title={String(p.position)}
+                                title={String(p.num)}
                             />
                         );
                     })}
                 </MapView>
-                <Text>{currentPosition.latitude} x {currentPosition.longitude}</Text>
 
                 {!inWork &&
                     <TouchableOpacity

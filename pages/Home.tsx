@@ -10,20 +10,20 @@ const Home = ({navigation}: any) => {
 
     useEffect(() => {
 
-        // db.transaction((tx: any) => {
-        //     tx.executeSql("DROP TABLE markers");
-        // });
-        //
-        // db.transaction((tx: any) => {
-        //     tx.executeSql("DROP TABLE activities");
-        // });
+        db.transaction((tx: any) => {
+            tx.executeSql("DROP TABLE markers");
+        });
+
+        db.transaction((tx: any) => {
+            tx.executeSql("DROP TABLE activities");
+        });
 
         db.transaction((tx: any) => {
             tx.executeSql("CREATE TABLE IF NOT EXISTS activities (id INTEGER PRIMARY KEY AUTOINCREMENT, start TEXT, end TEXT)");
         });
 
         db.transaction((tx: any) => {
-            tx.executeSql("CREATE TABLE IF NOT EXISTS markers (id INTEGER PRIMARY KEY AUTOINCREMENT, position INTEGER, longitude REAL, latitude REAL, activity_id INTEGER, FOREIGN KEY(activity_id) REFERENCES activities(id))")
+            tx.executeSql("CREATE TABLE IF NOT EXISTS markers (id INTEGER PRIMARY KEY AUTOINCREMENT, num INTEGER, longitude REAL, latitude REAL, activity_id INTEGER, FOREIGN KEY(activity_id) REFERENCES activities(id))")
         });
 
         db.transaction((tx: any) => {
