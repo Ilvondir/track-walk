@@ -1,15 +1,13 @@
 import React from 'react';
-import {Text} from "react-native";
 import Wrapper from "../components/Wrapper";
+import {Text} from "react-native";
 
-const Home = ({navigation}: any) => {
+const Tracking = ({navigation}: any) => {
     return (
         <Wrapper navigation={navigation}>
-
-            <Text>Dupa</Text>
-
+            <Text>Tracinkg</Text>
         </Wrapper>
     );
 };
 
-export default Home;
+export default Tracking;
