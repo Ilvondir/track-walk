@@ -25,6 +25,19 @@ const Tracking = ({navigation}: any) => {
     useEffect(() => {
 
         Location.requestForegroundPermissionsAsync()
+            .then(() => {
+
+                Location.getCurrentPositionAsync()
+                    .then((loc: any) => {
+                        if (map.current)
+                            map.current.animateToRegion({
+                                latitudeDelta: .009, longitudeDelta: .009,
+                                latitude: loc.coords.latitude,
+                                longitude: loc.coords.longitude
+                            });
+                    })
+
+            })
             .catch(() => navigation.navigate("Home"));
 
     }, []);

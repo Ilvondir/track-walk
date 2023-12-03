@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import Wrapper from "../components/Wrapper";
 import * as SQLite from 'expo-sqlite';
 import {Point} from "../models/Point";
@@ -119,7 +119,15 @@ const Home = ({navigation}: any) => {
                 showsVerticalScrollIndicator={false}
                 style={{paddingHorizontal: "3%"}}
             >
-                <Text>Dupa</Text>
+
+                <View style={styles.root}>
+                    <Image
+                        style={styles.story}
+                        source={require("../resources/img/home.png")}
+                    />
+                    <Text style={styles.header}>Home</Text>
+                    <Text>Here you can see all your activities!</Text>
+                </View>
 
                 {activities.map((a: {
                     id: number,
@@ -251,6 +259,26 @@ export default Home;
 
 
 const styles = StyleSheet.create({
+    root: {
+        width: "100%",
+        backgroundColor: "white",
+        marginTop: "3%",
+        marginBottom: "3%",
+        elevation: 1,
+        padding: "3%"
+    },
+    story: {
+        width: 250,
+        height: 200,
+        marginRight: "auto",
+        marginLeft: "auto"
+    },
+    header: {
+        color: "#FF474C",
+        fontWeight: "700",
+        fontSize: 25,
+        marginBottom: "3%"
+    },
     window: {
         width: "100%",
         aspectRatio: 1,
