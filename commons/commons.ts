@@ -1,4 +1,27 @@
 import {Activity} from "../models/Activity";
+import {Point} from "../models/Point";
+
+export const distance = (m1: any, m2: Point) => {
+    let lat1 = m1.latitude;
+    let lon1 = m1.longitude
+    let lat2 = m2.latitude;
+    let lon2 = m2.longitude;
+    const earthRadius = 6371;
+
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return (earthRadius * c) * 1000;
+}
 
 export const reformatDate = (date: string) => {
 
@@ -16,9 +39,9 @@ export const reformatDate = (date: string) => {
 
 export const timeBetween = (time: number) => {
 
-    const hours = Math.floor(time / 3600000); // Obliczanie godzin
-    const minutes = Math.floor((time % 3600000) / 60000); // Obliczanie minut
-    const seconds = Math.floor((time % 60000) / 1000); // Obliczanie sekund
+    const hours = Math.floor(time / 3600000);
+    const minutes = Math.floor((time % 3600000) / 60000);
+    const seconds = Math.floor((time % 60000) / 1000);
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }

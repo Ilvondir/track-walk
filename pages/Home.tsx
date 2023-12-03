@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from "react-native";
+import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import Wrapper from "../components/Wrapper";
 import * as SQLite from 'expo-sqlite';
 import {Point} from "../models/Point";
@@ -7,7 +7,7 @@ import MapView, {Polyline} from "react-native-maps";
 import {Activity} from "../models/Activity";
 import {reformatDate, speed, timeBetween} from "../commons/commons";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
-import {faClockFour, faRoad, faTachometerAltFast} from "@fortawesome/free-solid-svg-icons";
+import {faClockFour, faRoad, faTachometerAltFast, faTrashCan} from "@fortawesome/free-solid-svg-icons";
 
 let activs: Activity[] = [];
 let handleActivs: { id: number, start: string, end: string, distance: number, points: Point[] }[] = [];
@@ -84,6 +84,34 @@ const Home = ({navigation}: any) => {
 
     }, []);
 
+    const remove = (id: number) => {
+
+        Alert.alert(
+            'Confirm your decision',
+            'Are you sure you want to delete this activity?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    onPress: () => {
+                        db.transaction((tx: any) => {
+                            tx.executeSql("DELETE FROM points WHERE activity_id=?", [id]);
+                        });
+                        db.transaction((tx: any) => {
+                            tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
+                        });
+
+                        setActivities(activities.filter((a: any) => a.id !== id));
+                    },
+                    style: 'destructive',
+                }
+            ],
+        );
+    }
+
     return (
         <Wrapper navigation={navigation}>
 
@@ -120,8 +148,19 @@ const Home = ({navigation}: any) => {
                         <View key={i} style={styles.window}>
 
                             <View style={styles.window_section}>
-                                <Text style={styles.headText}>#{i + 1}</Text>
-                                <Text>{a.start}</Text>
+                                <View>
+                                    <Text style={styles.headText}>#{i + 1}</Text>
+                                    <Text>{a.start}</Text>
+                                </View>
+
+                                <TouchableOpacity
+                                    activeOpacity={0.6}
+                                    style={styles.remove_button}
+                                    onPress={() => remove(a.id)}
+                                >
+                                    <FontAwesomeIcon icon={faTrashCan} size={25}
+                                                     style={{color: "#AAA", marginRight: "2%"}}/>
+                                </TouchableOpacity>
                             </View>
 
                             <MapView
@@ -168,7 +207,7 @@ const Home = ({navigation}: any) => {
                             <View style={[styles.window_section, {flexDirection: "row"}]}>
 
                                 <View style={styles.column}>
-                                    <FontAwesomeIcon icon={faRoad} size={20}/>
+                                    <FontAwesomeIcon icon={faRoad} size={20} style={{color: "#FF474C"}}/>
                                     {a.distance < 1000 &&
                                         <Text style={styles.column_text}>
                                             {a.distance.toFixed(2)} m
@@ -183,14 +222,14 @@ const Home = ({navigation}: any) => {
                                 </View>
 
                                 <View style={styles.column}>
-                                    <FontAwesomeIcon icon={faClockFour} size={20}/>
+                                    <FontAwesomeIcon icon={faClockFour} size={20} style={{color: "#FF474C"}}/>
                                     <Text style={styles.column_text}>
                                         {timeBetween(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start)))}
                                     </Text>
                                 </View>
 
                                 <View style={styles.column}>
-                                    <FontAwesomeIcon icon={faTachometerAltFast} size={20}/>
+                                    <FontAwesomeIcon icon={faTachometerAltFast} size={20} style={{color: "#FF474C"}}/>
                                     <Text style={styles.column_text}>
                                         {speed(a).toFixed(2)} km/h
                                     </Text>
@@ -222,7 +261,8 @@ const styles = StyleSheet.create({
     window_section: {
         width: "100%",
         height: "20%",
-        padding: "2%"
+        padding: "2%",
+        flexDirection: "row"
     },
     map: {
         width: "100%",
@@ -242,5 +282,10 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         fontSize: 18,
         marginTop: "3%"
+    },
+    remove_button: {
+        marginTop: "auto",
+        marginBottom: "auto",
+        marginLeft: "auto"
     }
 })

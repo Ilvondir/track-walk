@@ -6,6 +6,7 @@ import * as Location from 'expo-location'
 import {Point} from "../models/Point";
 import {Activity} from "../models/Activity";
 import * as SQLite from 'expo-sqlite';
+import {distance} from "../commons/commons";
 
 let activ: Activity = new Activity();
 let currentPosition: any = {};
@@ -153,6 +154,7 @@ const Tracking = ({navigation}: any) => {
         pointNum = 1;
         setMarkers([]);
         handleMarkers = [];
+
         navigation.navigate("Home");
     }
 
@@ -226,28 +228,6 @@ const Tracking = ({navigation}: any) => {
 };
 
 export default Tracking;
-
-const distance = (m1: any, m2: Point) => {
-    let lat1 = m1.latitude;
-    let lon1 = m1.longitude
-    let lat2 = m2.latitude;
-    let lon2 = m2.longitude;
-    const earthRadius = 6371;
-
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * (Math.PI / 180)) *
-        Math.cos(lat2 * (Math.PI / 180)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return (earthRadius * c) * 1000;
-}
 
 const styles = StyleSheet.create({
     map: {
