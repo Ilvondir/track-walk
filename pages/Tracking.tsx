@@ -168,7 +168,20 @@ const Tracking = ({navigation}: any) => {
         setMarkers([]);
         handleMarkers = [];
 
-        navigation.navigate("Home");
+        navigation.navigate("Submit", {
+            dist: sumDistance,
+            start: activ.start,
+            end: new Date().toLocaleString('en-US', {
+                timeZone: "Europe/Warsaw",
+                hour12: false,
+                month: "2-digit",
+                day: "2-digit",
+                year: "numeric",
+                minute: "2-digit",
+                hour: "2-digit",
+                second: "2-digit"
+            })
+        });
     }
 
 

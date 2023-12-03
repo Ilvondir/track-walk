@@ -47,7 +47,7 @@ const Navbar = (props: { navigation: any }) => {
 
             <TouchableOpacity
                 activeOpacity={0.6}
-                style={[styles.link, route.name == "Tracking" ? {opacity: 1} : {opacity: 0.7}]}
+                style={[styles.link, route.name == ("Tracking" || "Submit") ? {opacity: 1} : {opacity: 0.7}]}
                 onPress={() => navigation.navigate("Tracking")}
             >
                 <FontAwesomeIcon

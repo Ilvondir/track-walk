@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import Wrapper from "../components/Wrapper";
 import * as SQLite from 'expo-sqlite';
 import {Point} from "../models/Point";
@@ -115,8 +115,6 @@ const Home = ({navigation}: any) => {
     return (
         <Wrapper navigation={navigation}>
 
-            <Pressable onPress={() => navigation.navigate("Submit")}><Text>Idx tam</Text></Pressable>
-
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={{paddingHorizontal: "3%"}}
@@ -141,10 +139,6 @@ const Home = ({navigation}: any) => {
 
                     let mLon = 0;
                     let mLat = 0;
-                    let minLon = Math.min(...a.points.map((p: Point) => p.longitude));
-                    let maxLon = Math.max(...a.points.map((p: Point) => p.longitude));
-                    let minLat = Math.min(...a.points.map((p: Point) => p.latitude));
-                    let maxLat = Math.max(...a.points.map((p: Point) => p.latitude));
 
                     a.points.map((p: Point) => {
                         mLat += p.latitude;
@@ -181,10 +175,10 @@ const Home = ({navigation}: any) => {
                                 scrollEnabled={false}
                                 rotateEnabled={false}
                                 initialRegion={{
-                                    latitude: mLat,
-                                    longitude: mLon,
-                                    latitudeDelta: (maxLat - minLat) * 1.4,
-                                    longitudeDelta: (maxLon - minLon) * 1.4,
+                                    latitude: (Math.max(...a.points.map((p: Point) => p.latitude)) + Math.min(...a.points.map((p: Point) => p.latitude))) / 2,
+                                    longitude: (Math.max(...a.points.map((p: Point) => p.longitude)) + Math.min(...a.points.map((p: Point) => p.longitude))) / 2,
+                                    latitudeDelta: (Math.max(...a.points.map((p: Point) => p.latitude)) - Math.min(...a.points.map((p: Point) => p.latitude))) * 1.4,
+                                    longitudeDelta: (Math.max(...a.points.map((p: Point) => p.longitude)) - Math.min(...a.points.map((p: Point) => p.longitude))) * 1.4,
                                 }}
                             >
 
