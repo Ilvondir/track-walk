@@ -5,6 +5,9 @@ import * as SQLite from 'expo-sqlite';
 import {Point} from "../models/Point";
 import MapView, {Polyline} from "react-native-maps";
 import {Activity} from "../models/Activity";
+import {reformatDate, speed, timeBetween} from "../commons/commons";
+import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
+import {faClockFour, faRoad, faTachometerAltFast} from "@fortawesome/free-solid-svg-icons";
 
 let activs: Activity[] = [];
 let handleActivs: { id: number, start: string, end: string, distance: number, points: Point[] }[] = [];
@@ -73,6 +76,8 @@ const Home = ({navigation}: any) => {
 
                     fetchPointsForActivities();
 
+                    console.log(activities);
+
                 },
                 (txObj: any, error: any) => console.error(error));
         });
@@ -116,7 +121,7 @@ const Home = ({navigation}: any) => {
 
                             <View style={styles.window_section}>
                                 <Text style={styles.headText}>#{i + 1}</Text>
-                                <Text>{a.end}</Text>
+                                <Text>{a.start}</Text>
                             </View>
 
                             <MapView
@@ -125,6 +130,7 @@ const Home = ({navigation}: any) => {
                                 zoomControlEnabled={false}
                                 zoomTapEnabled={false}
                                 scrollEnabled={false}
+                                rotateEnabled={false}
                                 initialRegion={{
                                     latitude: mLat,
                                     longitude: mLon,
@@ -162,27 +168,32 @@ const Home = ({navigation}: any) => {
                             <View style={[styles.window_section, {flexDirection: "row"}]}>
 
                                 <View style={styles.column}>
+                                    <FontAwesomeIcon icon={faRoad} size={20}/>
                                     {a.distance < 1000 &&
-                                        <Text>
+                                        <Text style={styles.column_text}>
                                             {a.distance.toFixed(2)} m
                                         </Text>
                                     }
 
                                     {a.distance >= 1000 &&
-                                        <Text>
+                                        <Text style={styles.column_text}>
                                             {(a.distance / 1000).toFixed(2)} km
                                         </Text>
                                     }
                                 </View>
 
                                 <View style={styles.column}>
-                                    <Text>
-                                        {new Date(a.start).toUTCString()}
+                                    <FontAwesomeIcon icon={faClockFour} size={20}/>
+                                    <Text style={styles.column_text}>
+                                        {timeBetween(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start)))}
                                     </Text>
                                 </View>
 
                                 <View style={styles.column}>
-                                    <Text>1</Text>
+                                    <FontAwesomeIcon icon={faTachometerAltFast} size={20}/>
+                                    <Text style={styles.column_text}>
+                                        {speed(a).toFixed(2)} km/h
+                                    </Text>
                                 </View>
 
                             </View>
@@ -226,5 +237,10 @@ const styles = StyleSheet.create({
         width: "33.3%",
         alignItems: "center",
         justifyContent: "center"
+    },
+    column_text: {
+        fontWeight: "700",
+        fontSize: 18,
+        marginTop: "3%"
     }
 })

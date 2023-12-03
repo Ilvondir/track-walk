@@ -48,7 +48,16 @@ const Tracking = ({navigation}: any) => {
                             });
 
                         const first = new Point(0, pointNum, suc.coords.longitude, suc.coords.latitude, 0);
-                        activ.start = new Date().toLocaleString('en-US', {timeZone: "Europe/Warsaw", hour12: false})
+                        activ.start = new Date().toLocaleString('en-US', {
+                            timeZone: "Europe/Warsaw",
+                            hour12: false,
+                            month: "2-digit",
+                            day: "2-digit",
+                            year: "numeric",
+                            minute: "2-digit",
+                            hour: "2-digit",
+                            second: "2-digit"
+                        })
 
                         lastMarker = first;
                         handleMarkers.push(first);
@@ -100,7 +109,7 @@ const Tracking = ({navigation}: any) => {
 
         const last = new Point(0, pointNum, currentPosition.longitude, currentPosition.latitude, 0);
 
-        sumDistance += distance(currentPosition, last);
+        sumDistance += distance(lastMarker, last);
 
         handleMarkers.push(last);
         handleMarkers2.push(last);
@@ -115,7 +124,13 @@ const Tracking = ({navigation}: any) => {
                 [activ.start,
                     new Date().toLocaleString('en-US', {
                         timeZone: "Europe/Warsaw",
-                        hour12: false
+                        hour12: false,
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "numeric",
+                        minute: "2-digit",
+                        hour: "2-digit",
+                        second: "2-digit"
                     }), sumDistance],
                 (txObj: any, resultSet: any) => {
                     id = resultSet.insertId
@@ -138,6 +153,7 @@ const Tracking = ({navigation}: any) => {
         pointNum = 1;
         setMarkers([]);
         handleMarkers = [];
+        navigation.navigate("Home");
     }
 
 
