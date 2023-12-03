@@ -9,6 +9,7 @@ import * as SQLite from 'expo-sqlite';
 
 let activ: Activity = new Activity();
 let currentPosition: any = {};
+let sumDistance = 0;
 let lastMarker: Point = new Point();
 let pointNum = 1;
 let handleMarkers: Point[] = [];
@@ -47,7 +48,7 @@ const Tracking = ({navigation}: any) => {
                             });
 
                         const first = new Point(0, pointNum, suc.coords.longitude, suc.coords.latitude, 0);
-                        activ.start = new Date().toLocaleString('en-US', {timeZone: "UTC", hour12: false})
+                        activ.start = new Date().toLocaleString('en-US', {timeZone: "Europe/Warsaw", hour12: false})
 
                         lastMarker = first;
                         handleMarkers.push(first);
@@ -68,8 +69,10 @@ const Tracking = ({navigation}: any) => {
 
                                 console.log(dist);
 
-                                if (dist > 0) {
+                                if (dist > 10) {
                                     const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
+
+                                    sumDistance += dist;
 
                                     pointNum++;
                                     handleMarkers.push(nP);
@@ -90,35 +93,17 @@ const Tracking = ({navigation}: any) => {
             })
     }
 
-    const distance = (m1: any, m2: Point) => {
-        let lat1 = m1.latitude;
-        let lon1 = m1.longitude
-        let lat2 = m2.latitude;
-        let lon2 = m2.longitude;
-        const earthRadius = 6371;
-
-        const dLat = (lat2 - lat1) * (Math.PI / 180);
-        const dLon = (lon2 - lon1) * (Math.PI / 180);
-
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * (Math.PI / 180)) *
-            Math.cos(lat2 * (Math.PI / 180)) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return (earthRadius * c) * 1000;
-    }
-
     const stop = () => {
 
         handleInWork = false
         setInWork(false);
 
-        handleMarkers.push(new Point(0, pointNum, currentPosition.longitude, currentPosition.latitude, 0));
-        handleMarkers2.push(new Point(0, pointNum, currentPosition.longitude, currentPosition.latitude, 0));
+        const last = new Point(0, pointNum, currentPosition.longitude, currentPosition.latitude, 0);
+
+        sumDistance += distance(currentPosition, last);
+
+        handleMarkers.push(last);
+        handleMarkers2.push(last);
         setMarkers(handleMarkers);
 
         const db = SQLite.openDatabase("trackwalk");
@@ -126,8 +111,12 @@ const Tracking = ({navigation}: any) => {
         let id = 0 as any;
 
         db.transaction((tx: any) => {
-            tx.executeSql("INSERT INTO activities (start, end) VALUES (?, ?)",
-                [activ.start, new Date().toLocaleString('en-US', {timeZone: "UTC", hour12: false})],
+            tx.executeSql("INSERT INTO activities (start, end, distance) VALUES (?, ?, ?)",
+                [activ.start,
+                    new Date().toLocaleString('en-US', {
+                        timeZone: "Europe/Warsaw",
+                        hour12: false
+                    }), sumDistance],
                 (txObj: any, resultSet: any) => {
                     id = resultSet.insertId
                 },
@@ -137,7 +126,7 @@ const Tracking = ({navigation}: any) => {
 
         handleMarkers2.forEach((m: Point) => {
             db.transaction((tx: any) => {
-                tx.executeSql("INSERT INTO markers (num, latitude, longitude, activity_id) VALUES (?, ?, ?, ?)",
+                tx.executeSql("INSERT INTO points (num, latitude, longitude, activity_id) VALUES (?, ?, ?, ?)",
                     [m.num, m.latitude, m.longitude, id],
                     (txObj: any, resultSet: any) => console.log(resultSet),
                     (txObj: any, error: any) => console.error(error)
@@ -180,7 +169,7 @@ const Tracking = ({navigation}: any) => {
                                             longitude: p.longitude,
                                         },
                                     ]}
-                                    strokeWidth={4}
+                                    strokeWidth={2}
                                     strokeColor={"#FF474C"}
                                     strokeColors={["#FF474C"]}
                                 />
@@ -221,6 +210,28 @@ const Tracking = ({navigation}: any) => {
 };
 
 export default Tracking;
+
+const distance = (m1: any, m2: Point) => {
+    let lat1 = m1.latitude;
+    let lon1 = m1.longitude
+    let lat2 = m2.latitude;
+    let lon2 = m2.longitude;
+    const earthRadius = 6371;
+
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return (earthRadius * c) * 1000;
+}
 
 const styles = StyleSheet.create({
     map: {
