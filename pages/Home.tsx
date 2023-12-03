@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {Alert, Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import Wrapper from "../components/Wrapper";
 import * as SQLite from 'expo-sqlite';
 import {Point} from "../models/Point";
@@ -114,6 +114,8 @@ const Home = ({navigation}: any) => {
 
     return (
         <Wrapper navigation={navigation}>
+
+            <Pressable onPress={() => navigation.navigate("Submit")}><Text>Idx tam</Text></Pressable>
 
             <ScrollView
                 showsVerticalScrollIndicator={false}

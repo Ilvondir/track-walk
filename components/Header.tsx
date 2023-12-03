@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {StyleSheet, Text, TouchableOpacity, Vibration, View} from "react-native";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faArrowLeft, faLightbulb} from "@fortawesome/free-solid-svg-icons";
 import {Camera, FlashMode} from "expo-camera";
@@ -12,6 +12,7 @@ const Header = (props: { navigation: any }) => {
     const handleFlash = () => {
         Camera.requestCameraPermissionsAsync()
             .then(() => {
+                Vibration.vibrate(0.15 * 1000);
                 setFlashlight(!flashlight);
             })
             .catch(err => {
