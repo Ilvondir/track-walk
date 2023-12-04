@@ -77,12 +77,11 @@ const Home = ({navigation}: any) => {
                     fetchPointsForActivities();
 
                     console.log(activities);
-
                 },
                 (txObj: any, error: any) => console.error(error));
         });
 
-    }, []);
+    }, [activities]);
 
     const remove = (id: number) => {
 
@@ -104,7 +103,10 @@ const Home = ({navigation}: any) => {
                             tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
                         });
 
-                        setActivities(activities.filter((a: any) => a.id !== id));
+
+                        activs = [];
+                        handleActivs = [];
+                        setActivities([]);
                     },
                     style: 'destructive',
                 }
@@ -136,18 +138,6 @@ const Home = ({navigation}: any) => {
                     distance: number,
                     points: Point[]
                 }, i: number) => {
-
-                    let mLon = 0;
-                    let mLat = 0;
-
-                    a.points.map((p: Point) => {
-                        mLat += p.latitude;
-                        mLon += p.longitude;
-                    })
-
-                    mLon /= a.points.length;
-                    mLat /= a.points.length;
-
                     return (
                         <View key={i} style={styles.window}>
 

@@ -16,7 +16,7 @@ const Stats = ({navigation}: any) => {
                         source={require("../resources/img/stats.png")}
                     />
                     <Text style={styles.header}>Statistics</Text>
-                    <Text>Here you can see rcharts describing your activities!</Text>
+                    <Text>Here you can see charts describing your activities!</Text>
                 </View>
 
             </ScrollView>
