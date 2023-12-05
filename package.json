@@ -15,15 +15,16 @@
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.17",
     "expo": "~49.0.15",
+    "expo-camera": "~13.4.4",
+    "expo-location": "~16.1.0",
+    "expo-sqlite": "~11.3.3",
     "expo-status-bar": "~1.6.0",
     "react": "18.2.0",
     "react-native": "0.72.6",
-    "react-native-svg": "^14.0.0",
-    "react-native-torch": "^1.2.0",
-    "expo-camera": "~13.4.4",
-    "expo-sqlite": "~11.3.3",
     "react-native-maps": "1.7.1",
-    "expo-location": "~16.1.0"
+    "react-native-responsive-linechart": "^5.7.1",
+    "react-native-svg": "^14.0.0",
+    "react-native-torch": "^1.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

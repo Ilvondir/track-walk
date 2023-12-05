@@ -69,3 +69,26 @@ export const getNow = () => {
         second: "2-digit"
     });
 }
+
+export const sumTime = (tab: string[]) => {
+
+    let hours = 0, minutes = 0, seconds = 0;
+
+    tab.map((s: string) => {
+        hours += parseInt(s.slice(0, 2));
+        minutes += parseInt(s.slice(3, 5));
+        seconds += parseInt(s.slice(6, 8));
+    });
+
+    if (minutes >= 60) {
+        hours += Math.floor(minutes / 60);
+        minutes %= 60;
+    }
+
+    if (seconds >= 60) {
+        minutes += Math.floor(seconds / 60);
+        seconds %= 60;
+    }
+
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}

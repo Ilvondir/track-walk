@@ -9,6 +9,7 @@ import {reformatDate, speed, timeBetween} from "../commons/commons";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faClockFour, faRoad, faTachometerAltFast, faTrashCan} from "@fortawesome/free-solid-svg-icons";
 import {useRoute} from "@react-navigation/native";
+import TrackFirstActivity from "../components/TrackFirstActivity";
 
 let activs: Activity[] = [];
 let handleActivs: { id: number, start: string, end: string, distance: number, points: Point[] }[] = [];
@@ -25,12 +26,14 @@ const Home = ({navigation}: any) => {
         points: Point[]
     }[]);
 
+
     useEffect(() => {
         // @ts-ignore
         if (route.params?.add !== undefined) {
-            setRefresh(!refresh);
             setActivities([]);
+            setRefresh(!refresh);
         }
+        // @ts-ignore
     }, [route.params?.add]);
 
 
@@ -140,6 +143,10 @@ const Home = ({navigation}: any) => {
                     <Text style={styles.header}>Home</Text>
                     <Text>Here you can see all your activities!</Text>
                 </View>
+
+                {activities.length == 0 &&
+                    <TrackFirstActivity navigation={navigation}/>
+                }
 
                 {activities.map((a: {
                     id: number,
