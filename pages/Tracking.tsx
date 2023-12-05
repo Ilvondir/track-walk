@@ -96,7 +96,7 @@ const Tracking = ({navigation}: any) => {
 
                             console.log(dist);
 
-                            if (dist > 0) {
+                            if (dist > 10) {
                                 const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
 
                                 sumDistance += dist;
