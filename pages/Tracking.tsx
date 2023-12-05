@@ -3,6 +3,7 @@ import Wrapper from "../components/Wrapper";
 import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import MapView, {Polyline} from "react-native-maps";
 import * as Location from 'expo-location'
+import {LocationSubscription} from 'expo-location'
 import {Point} from "../models/Point";
 import {Activity} from "../models/Activity";
 import * as SQLite from 'expo-sqlite';
@@ -17,6 +18,7 @@ let lastMarker: Point = new Point();
 let pointNum = 1;
 let handleMarkers: Point[] = [];
 let handleMarkers2: Point[] = [];
+let handleInWork = false;
 
 const Tracking = ({navigation}: any) => {
     const map = useRef<MapView>(null);
@@ -24,8 +26,6 @@ const Tracking = ({navigation}: any) => {
     const [inWork, setInWork] = useState(false as boolean);
     const [now, setNow] = useState(getNow() as string);
     let intervalID: any;
-
-    let subscription: any = null;
 
     useEffect(() => {
 
@@ -55,6 +55,8 @@ const Tracking = ({navigation}: any) => {
     const start = () => {
 
         sumDistance = 0;
+        handleMarkers = [];
+        handleMarkers2 = [];
 
         Location.requestForegroundPermissionsAsync()
             .then(() => {
@@ -83,12 +85,12 @@ const Tracking = ({navigation}: any) => {
                         setMarkers(handleMarkers);
 
                         setInWork(true);
+                        handleInWork = true;
                         pointNum++;
 
-                        subscription = Location.watchPositionAsync({
+                        Location.watchPositionAsync({
                             accuracy: Location.Accuracy.BestForNavigation
                         }, (loc) => {
-                            // console.log(loc);
 
                             const dist = distance(loc.coords, lastMarker);
 
@@ -109,20 +111,29 @@ const Tracking = ({navigation}: any) => {
                             currentPosition = loc.coords as any;
                             console.log(currentPosition);
 
-                        });
+                        })
+                            .then(res => {
+                                let id: any;
+
+                                id = setInterval(() => removeSub(res, id), 5000)
+                            });
                     })
             })
     }
 
-    const stop = () => {
-
-        if (subscription) {
-            subscription.remove();
+    const removeSub = (res: LocationSubscription, id: any) => {
+        if (!handleInWork) {
+            clearInterval(id)
+            res.remove();
         }
+    }
+
+    const stop = () => {
 
         clearInterval(intervalID);
 
         setInWork(false);
+        handleInWork = false;
 
         const last = new Point(0, pointNum, currentPosition.longitude, currentPosition.latitude, 0);
 
@@ -159,7 +170,6 @@ const Tracking = ({navigation}: any) => {
 
         pointNum = 1;
         setMarkers([]);
-        handleMarkers = [];
 
         navigation.navigate("Submit", {
             dist: sumDistance,
@@ -249,7 +259,12 @@ const Tracking = ({navigation}: any) => {
                             </View>
 
                             <View style={styles.column}>
-                                <FontAwesomeIcon icon={faTachometerAltFast} size={20} style={{color: "#FF474C"}}/>
+                                <FontAwesomeIcon
+                                    icon={faTachometerAltFast}
+                                    size={20}
+                                    style={{color: "#FF474C"}}
+                                />
+
                                 <Text style={styles.column_text}>
                                     {inWork &&
                                         speed(new Activity(0, activ.start, now, sumDistance)).toFixed(2) + " km/h"
@@ -263,33 +278,33 @@ const Tracking = ({navigation}: any) => {
 
                         </View>
 
+                        {!inWork &&
+                            <TouchableOpacity
+                                activeOpacity={0.6}
+                                style={styles.button}
+                                onPress={() => start()}
+                            >
+                                <Text style={styles.btext}>
+                                    Start tracking
+                                </Text>
+                            </TouchableOpacity>
+                        }
+
+                        {inWork &&
+                            <TouchableOpacity
+                                activeOpacity={0.6}
+                                style={styles.button}
+                                onPress={() => stop()}
+                            >
+                                <Text style={styles.btext}>
+                                    Save activity
+                                </Text>
+                            </TouchableOpacity>
+                        }
+
                     </View>
 
                 </View>
-
-                {!inWork &&
-                    <TouchableOpacity
-                        activeOpacity={0.6}
-                        style={styles.button}
-                        onPress={() => start()}
-                    >
-                        <Text style={styles.btext}>
-                            Start tracking
-                        </Text>
-                    </TouchableOpacity>
-                }
-
-                {inWork &&
-                    <TouchableOpacity
-                        activeOpacity={0.6}
-                        style={styles.button}
-                        onPress={() => stop()}
-                    >
-                        <Text style={styles.btext}>
-                            Save activity
-                        </Text>
-                    </TouchableOpacity>
-                }
 
 
             </View>
@@ -311,6 +326,8 @@ const styles = StyleSheet.create({
         width: "50%",
         marginStart: "auto",
         marginEnd: "auto",
+        marginBottom: "3%",
+        marginTop: "3%",
         borderRadius: 15
     },
     btext: {
@@ -324,7 +341,8 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
         elevation: 1,
         marginTop: "3%",
-        marginBottom: "3%"
+        marginBottom: "3%",
+        paddingTop: "3%"
     },
     window_section: {
         width: "100%",
