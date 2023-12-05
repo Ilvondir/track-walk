@@ -8,12 +8,15 @@ import {Activity} from "../models/Activity";
 import {reformatDate, speed, timeBetween} from "../commons/commons";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faClockFour, faRoad, faTachometerAltFast, faTrashCan} from "@fortawesome/free-solid-svg-icons";
+import {useRoute} from "@react-navigation/native";
 
 let activs: Activity[] = [];
 let handleActivs: { id: number, start: string, end: string, distance: number, points: Point[] }[] = [];
 
 const Home = ({navigation}: any) => {
     const db = SQLite.openDatabase("trackwalk");
+    const route = useRoute();
+    const [refresh, setRefresh] = useState(false as boolean);
     const [activities, setActivities] = useState([] as {
         id: number,
         start: string,
@@ -21,6 +24,14 @@ const Home = ({navigation}: any) => {
         distance: number,
         points: Point[]
     }[]);
+
+    useEffect(() => {
+        // @ts-ignore
+        if (route.params?.add !== undefined) {
+            setRefresh(!refresh);
+            setActivities([]);
+        }
+    }, [route.params?.add]);
 
 
     useEffect(() => {
@@ -72,16 +83,17 @@ const Home = ({navigation}: any) => {
                         }
 
                         setActivities(handleActivs);
+                        activs = [];
+                        handleActivs = []
                     };
 
                     fetchPointsForActivities();
 
-                    console.log(activities);
                 },
                 (txObj: any, error: any) => console.error(error));
         });
 
-    }, [activities]);
+    }, [refresh]);
 
     const remove = (id: number) => {
 
@@ -103,10 +115,8 @@ const Home = ({navigation}: any) => {
                             tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
                         });
 
-
-                        activs = [];
-                        handleActivs = [];
                         setActivities([]);
+                        setRefresh(!refresh);
                     },
                     style: 'destructive',
                 }

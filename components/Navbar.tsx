@@ -14,7 +14,7 @@ const Navbar = (props: { navigation: any }) => {
             <TouchableOpacity
                 activeOpacity={0.6}
                 style={[styles.link, route.name == "Home" ? {opacity: 1} : {opacity: 0.7}]}
-                onPress={() => navigation.navigate("Home")}
+                onPress={() => navigation.navigate("Home", {add: Math.random()})}
             >
                 <FontAwesomeIcon
                     style={styles.text}
@@ -48,7 +48,7 @@ const Navbar = (props: { navigation: any }) => {
             <TouchableOpacity
                 activeOpacity={0.6}
                 style={[styles.link, route.name == ("Tracking" || "Submit") ? {opacity: 1} : {opacity: 0.7}]}
-                onPress={() => navigation.navigate("Tracking")}
+                onPress={() => navigation.navigate("Tracking", {add: Math.random()})}
             >
                 <FontAwesomeIcon
                     icon={faStopwatch}

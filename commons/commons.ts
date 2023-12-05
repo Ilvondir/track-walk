@@ -42,6 +42,8 @@ export const timeBetween = (time: number) => {
     const minutes = Math.floor((time % 3600000) / 60000);
     const seconds = Math.floor((time % 60000) / 1000);
 
+    if (hours < 0 || minutes < 0 || seconds < 0) return "00:00:00";
+
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
@@ -50,5 +52,20 @@ export const speed = (a: Activity) => {
     const time = Number(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start)));
     const distance = Number(a.distance);
 
+    if (time <= 0) return 0;
+
     return (distance / time) * (3600000 / 1000);
+}
+
+export const getNow = () => {
+    return new Date().toLocaleString('en-US', {
+        timeZone: "Europe/Warsaw",
+        hour12: false,
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+        minute: "2-digit",
+        hour: "2-digit",
+        second: "2-digit"
+    });
 }

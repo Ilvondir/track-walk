@@ -15,6 +15,7 @@ import {Activity} from "../models/Activity";
 
 const Submit = ({navigation}: any) => {
     const route = useRoute();
+    // @ts-ignore
     let {dist = 0, start = '', end = ''} = route?.params;
 
     useEffect(() => {
@@ -90,7 +91,7 @@ const Submit = ({navigation}: any) => {
                     <TouchableOpacity
                         activeOpacity={0.6}
                         style={styles.button}
-                        onPress={() => navigation.navigate("Home")}
+                        onPress={() => navigation.navigate("Home", {add: Math.random()})}
                     >
                         <Text style={styles.btext}>
                             Go to home

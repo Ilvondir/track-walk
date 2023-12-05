@@ -6,7 +6,9 @@ import * as Location from 'expo-location'
 import {Point} from "../models/Point";
 import {Activity} from "../models/Activity";
 import * as SQLite from 'expo-sqlite';
-import {distance} from "../commons/commons";
+import {distance, getNow, reformatDate, speed, timeBetween} from "../commons/commons";
+import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
+import {faClockFour, faRoad, faTachometerAltFast} from "@fortawesome/free-solid-svg-icons";
 
 let activ: Activity = new Activity();
 let currentPosition: any = {};
@@ -15,12 +17,15 @@ let lastMarker: Point = new Point();
 let pointNum = 1;
 let handleMarkers: Point[] = [];
 let handleMarkers2: Point[] = [];
-let handleInWork = false;
 
 const Tracking = ({navigation}: any) => {
     const map = useRef<MapView>(null);
     const [markers, setMarkers] = useState([] as Point[]);
     const [inWork, setInWork] = useState(false as boolean);
+    const [now, setNow] = useState(getNow() as string);
+    let intervalID: any;
+
+    let subscription: any = null;
 
     useEffect(() => {
 
@@ -42,8 +47,14 @@ const Tracking = ({navigation}: any) => {
 
     }, []);
 
+    const setNewNow = () => {
+        setNow(getNow());
+    }
+
 
     const start = () => {
+
+        sumDistance = 0;
 
         Location.requestForegroundPermissionsAsync()
             .then(() => {
@@ -51,7 +62,6 @@ const Tracking = ({navigation}: any) => {
                 Location.getCurrentPositionAsync()
                     .then(suc => {
 
-                        // console.log(suc);
                         currentPosition = suc.coords;
 
                         if (map.current)
@@ -62,63 +72,56 @@ const Tracking = ({navigation}: any) => {
                             });
 
                         const first = new Point(0, pointNum, suc.coords.longitude, suc.coords.latitude, 0);
-                        activ.start = new Date().toLocaleString('en-US', {
-                            timeZone: "Europe/Warsaw",
-                            hour12: false,
-                            month: "2-digit",
-                            day: "2-digit",
-                            year: "numeric",
-                            minute: "2-digit",
-                            hour: "2-digit",
-                            second: "2-digit"
-                        })
+                        activ.start = getNow();
+
+                        setNewNow();
+                        intervalID = setInterval(() => setNewNow(), 1000);
 
                         lastMarker = first;
                         handleMarkers.push(first);
                         handleMarkers2.push(first);
                         setMarkers(handleMarkers);
 
-                        handleInWork = true;
                         setInWork(true);
                         pointNum++;
 
-                        Location.watchPositionAsync({
+                        subscription = Location.watchPositionAsync({
                             accuracy: Location.Accuracy.BestForNavigation
                         }, (loc) => {
                             // console.log(loc);
 
-                            if (handleInWork) {
-                                const dist = distance(loc.coords, lastMarker);
+                            const dist = distance(loc.coords, lastMarker);
 
-                                console.log(dist);
+                            console.log(dist);
 
-                                if (dist > 10) {
-                                    const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
+                            if (dist > 0) {
+                                const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
 
-                                    sumDistance += dist;
+                                sumDistance += dist;
 
-                                    pointNum++;
-                                    handleMarkers.push(nP);
-                                    handleMarkers2.push(nP);
-                                    setMarkers([...handleMarkers]);
-                                    lastMarker = nP;
-                                }
-
-                                currentPosition = loc.coords as any;
-                                console.log(currentPosition);
+                                pointNum++;
+                                handleMarkers.push(nP);
+                                handleMarkers2.push(nP);
+                                setMarkers([...handleMarkers]);
+                                lastMarker = nP;
                             }
 
-                        })
-                            .then(() => {
-                            })
-                            .catch(err => console.error(err))
+                            currentPosition = loc.coords as any;
+                            console.log(currentPosition);
+
+                        });
                     })
             })
     }
 
     const stop = () => {
 
-        handleInWork = false
+        if (subscription) {
+            subscription.remove();
+        }
+
+        clearInterval(intervalID);
+
         setInWork(false);
 
         const last = new Point(0, pointNum, currentPosition.longitude, currentPosition.latitude, 0);
@@ -135,17 +138,7 @@ const Tracking = ({navigation}: any) => {
 
         db.transaction((tx: any) => {
             tx.executeSql("INSERT INTO activities (start, end, distance) VALUES (?, ?, ?)",
-                [activ.start,
-                    new Date().toLocaleString('en-US', {
-                        timeZone: "Europe/Warsaw",
-                        hour12: false,
-                        month: "2-digit",
-                        day: "2-digit",
-                        year: "numeric",
-                        minute: "2-digit",
-                        hour: "2-digit",
-                        second: "2-digit"
-                    }), sumDistance],
+                [activ.start, getNow(), sumDistance],
                 (txObj: any, resultSet: any) => {
                     id = resultSet.insertId
                 },
@@ -171,16 +164,7 @@ const Tracking = ({navigation}: any) => {
         navigation.navigate("Submit", {
             dist: sumDistance,
             start: activ.start,
-            end: new Date().toLocaleString('en-US', {
-                timeZone: "Europe/Warsaw",
-                hour12: false,
-                month: "2-digit",
-                day: "2-digit",
-                year: "numeric",
-                minute: "2-digit",
-                hour: "2-digit",
-                second: "2-digit"
-            })
+            end: getNow()
         });
     }
 
@@ -221,6 +205,67 @@ const Tracking = ({navigation}: any) => {
                         }
                     })}
                 </MapView>
+
+                <View
+                    style={{marginHorizontal: "3%"}}
+                >
+
+                    <View style={styles.window}>
+
+                        <View style={[styles.window_section, {flexDirection: "row"}]}>
+
+                            <View style={styles.column}>
+                                <FontAwesomeIcon icon={faRoad} size={20} style={{color: "#FF474C"}}/>
+                                {!inWork &&
+                                    <Text style={styles.column_text}>
+                                        {"0.00"} m
+                                    </Text>
+                                }
+
+                                {sumDistance < 1000 && inWork &&
+                                    <Text style={styles.column_text}>
+                                        {sumDistance.toFixed(2)} m
+                                    </Text>
+                                }
+
+                                {sumDistance >= 1000 && inWork &&
+                                    <Text style={styles.column_text}>
+                                        {(sumDistance / 1000).toFixed(2)} km
+                                    </Text>
+                                }
+                            </View>
+
+                            <View style={styles.column}>
+                                <FontAwesomeIcon icon={faClockFour} size={20} style={{color: "#FF474C"}}/>
+                                <Text style={styles.column_text}>
+                                    {!inWork &&
+                                        "00:00:00"
+                                    }
+
+                                    {inWork &&
+                                        timeBetween(Date.parse(reformatDate(now)) - Date.parse(reformatDate(activ.start)))
+                                    }
+                                </Text>
+                            </View>
+
+                            <View style={styles.column}>
+                                <FontAwesomeIcon icon={faTachometerAltFast} size={20} style={{color: "#FF474C"}}/>
+                                <Text style={styles.column_text}>
+                                    {inWork &&
+                                        speed(new Activity(0, activ.start, now, sumDistance)).toFixed(2) + " km/h"
+                                    }
+
+                                    {!inWork &&
+                                        "0.00 km/h"
+                                    }
+                                </Text>
+                            </View>
+
+                        </View>
+
+                    </View>
+
+                </View>
 
                 {!inWork &&
                     <TouchableOpacity
@@ -266,13 +311,34 @@ const styles = StyleSheet.create({
         width: "50%",
         marginStart: "auto",
         marginEnd: "auto",
-        borderRadius: 15,
-        marginTop: "3%"
+        borderRadius: 15
     },
     btext: {
         fontSize: 20,
         color: "white",
         textAlign: "center",
         fontWeight: "700"
-    }
+    },
+    window: {
+        width: "100%",
+        backgroundColor: "white",
+        elevation: 1,
+        marginTop: "3%",
+        marginBottom: "3%"
+    },
+    window_section: {
+        width: "100%",
+        padding: "2%",
+        flexDirection: "row"
+    },
+    column: {
+        width: "33.3%",
+        alignItems: "center",
+        justifyContent: "center"
+    },
+    column_text: {
+        fontWeight: "700",
+        fontSize: 18,
+        marginTop: "3%"
+    },
 });
