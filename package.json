@@ -24,7 +24,8 @@
     "react-native-maps": "1.7.1",
     "react-native-responsive-linechart": "^5.7.1",
     "react-native-svg": "^14.0.0",
-    "react-native-torch": "^1.2.0"
+    "react-native-torch": "^1.2.0",
+    "expo-local-authentication": "~13.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

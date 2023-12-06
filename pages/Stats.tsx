@@ -2,34 +2,17 @@ import React, {useEffect, useState} from 'react';
 import Wrapper from "../components/Wrapper";
 import {Image, ScrollView, StyleSheet, Text, View} from "react-native";
 import {Activity} from "../models/Activity";
-import {Point} from "../models/Point";
 import * as SQLite from "expo-sqlite";
-import {useRoute} from "@react-navigation/native";
 import TrackFirstActivity from "../components/TrackFirstActivity";
 import {reformatDate, sumTime, timeBetween} from "../commons/commons";
 import {Area, Chart, Line, VerticalAxis} from "react-native-responsive-linechart";
 
 
 let activs: Activity[] = [];
-let handleActivs: {
-    id: number,
-    start: string,
-    end: string,
-    distance: number,
-    points: Point[]
-}[] = [];
 
 const Stats = ({navigation}: any) => {
     const db = SQLite.openDatabase("trackwalk");
-    const route = useRoute();
-    const [refresh, setRefresh] = useState(false as boolean);
-    const [activities, setActivities] = useState([] as {
-        id: number,
-        start: string,
-        end: string,
-        distance: number,
-        points: Point[]
-    }[]);
+    const [activities, setActivities] = useState([] as Activity[]);
     const [sumDistance, setSumDistance] = useState(0);
     const [times, setTimes] = useState([] as string[]);
     const [chartPoints, setChartPoints] = useState([] as {
@@ -38,40 +21,15 @@ const Stats = ({navigation}: any) => {
     }[])
 
     const fetchDataFromDatabase = () => {
-        db.transaction((tx: any) => {
-            tx.executeSql(
-                "SELECT * FROM activities ORDER BY id ASC",
-                null,
-                (txObj: any, resultSet: any) => {
-                    activs = resultSet.rows._array;
+        db.transaction(
+            (tx: any) => {
+                tx.executeSql(
+                    "SELECT * FROM activities ORDER BY id ASC",
+                    null,
+                    (txObj: any, resultSet: any) => {
+                        activs = resultSet.rows._array;
 
-                    const fetchPointsForActivities = async () => {
-                        for (const a of activs) {
-                            const points = await new Promise((resolve, reject) => {
-                                db.transaction((tx: any) => {
-                                    tx.executeSql(
-                                        "SELECT * FROM points WHERE activity_id=? ORDER BY num ASC",
-                                        [a.id],
-                                        (txObj: any, resultSet: any) => {
-                                            resolve(resultSet.rows._array);
-                                        },
-                                        (txObj: any, error: any) => {
-                                            reject(error);
-                                        }
-                                    );
-                                });
-                            });
-
-                            handleActivs.push({
-                                id: a.id,
-                                start: a.start,
-                                end: a.end,
-                                distance: a.distance,
-                                points: points as Point[],
-                            });
-                        }
-
-                        setActivities(handleActivs);
+                        setActivities(activs);
 
                         let d = 0;
                         let tab = [] as string[];
@@ -81,7 +39,6 @@ const Stats = ({navigation}: any) => {
                             d += a.distance;
 
                             let time = "";
-
                             time = timeBetween(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start)));
                             tab.push(time);
 
@@ -90,18 +47,16 @@ const Stats = ({navigation}: any) => {
                             let point = {x: i, y: a.distance};
                             points.push(point);
                         });
+
                         setSumDistance(d);
                         setChartPoints(points);
 
                         activs = [];
-                        handleActivs = [];
-                    };
-
-                    fetchPointsForActivities();
-                },
-                (txObj: any, error: any) => console.error(error)
-            );
-        });
+                    },
+                    (txObj: any, err: any) => console.error(err)
+                );
+            }
+        );
     };
 
     useEffect(() => {
@@ -176,13 +131,13 @@ const Stats = ({navigation}: any) => {
                         </View>
 
                         {chartPoints.length >= 2 &&
-                            <View style={styles.section}>
+                            <View style={[styles.section, {paddingVertical: "3%"}]}>
 
                                 <Chart
                                     style={{height: 200, width: '100%', backgroundColor: 'white'}}
                                     xDomain={{min: 0, max: chartPoints.length - 1}}
                                     yDomain={{min: 0, max: 1.2 * Math.max(...chartPoints.map((a: any) => a.y))}}
-                                    padding={{left: 25, bottom: 5, top: 5, right: 10}}
+                                    padding={{left: 35, bottom: 5, top: 5, right: 10}}
                                     data={chartPoints}
                                 >
                                     <VerticalAxis
@@ -196,7 +151,12 @@ const Stats = ({navigation}: any) => {
                                     />
 
                                     <Area
-                                        theme={{gradient: {from: {color: '#FF474C', opacity: 0.8}, to: {color: '#FF474C', opacity: 0.2}}}}
+                                        theme={{
+                                            gradient: {
+                                                from: {color: '#FF474C', opacity: 0.8},
+                                                to: {color: '#FF474C', opacity: 0.2}
+                                            }
+                                        }}
                                     />
 
                                     <Line

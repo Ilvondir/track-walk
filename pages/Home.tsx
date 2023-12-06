@@ -10,6 +10,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faClockFour, faRoad, faTachometerAltFast, faTrashCan} from "@fortawesome/free-solid-svg-icons";
 import {useRoute} from "@react-navigation/native";
 import TrackFirstActivity from "../components/TrackFirstActivity";
+import * as LocalAuthentication from "expo-local-authentication";
 
 let activs: Activity[] = [];
 let handleActivs: { id: number, start: string, end: string, distance: number, points: Point[] }[] = [];
@@ -111,15 +112,45 @@ const Home = ({navigation}: any) => {
                 {
                     text: 'Delete',
                     onPress: () => {
-                        db.transaction((tx: any) => {
-                            tx.executeSql("DELETE FROM points WHERE activity_id=?", [id]);
-                        });
-                        db.transaction((tx: any) => {
-                            tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
-                        });
 
-                        setActivities([]);
-                        setRefresh(!refresh);
+                        LocalAuthentication.isEnrolledAsync()
+                            .then(check => {
+
+                                if (check) {
+
+                                    LocalAuthentication.authenticateAsync({promptMessage: "Please authenticate first."})
+                                        .then(res => {
+                                            console.log(res);
+                                            if (res.success) {
+                                                db.transaction((tx: any) => {
+                                                    tx.executeSql("DELETE FROM points WHERE activity_id=?", [id]);
+                                                });
+                                                db.transaction((tx: any) => {
+                                                    tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
+                                                });
+
+                                                setActivities([]);
+                                                setRefresh(!refresh);
+                                            }
+                                        })
+                                        .catch(err => console.error(err))
+
+                                } else {
+
+                                    db.transaction((tx: any) => {
+                                        tx.executeSql("DELETE FROM points WHERE activity_id=?", [id]);
+                                    });
+                                    db.transaction((tx: any) => {
+                                        tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
+                                    });
+
+                                    setActivities([]);
+                                    setRefresh(!refresh);
+                                }
+
+
+                            })
+                            .catch(err => console.error(err));
                     },
                     style: 'destructive',
                 }
