@@ -91,10 +91,10 @@ const Home = ({navigation}: any) => {
                         handleActivs = []
                     };
 
-                    fetchPointsForActivities();
+                    fetchPointsForActivities().then(r => console.log(r));
 
                 },
-                (txObj: any, error: any) => console.error(error));
+                (txObj: any, error: any) => console.error([error, txObj]));
         });
 
     }, [refresh]);
@@ -120,7 +120,7 @@ const Home = ({navigation}: any) => {
 
                                     LocalAuthentication.authenticateAsync({promptMessage: "Please authenticate first."})
                                         .then(res => {
-                                            console.log(res);
+
                                             if (res.success) {
                                                 db.transaction((tx: any) => {
                                                     tx.executeSql("DELETE FROM points WHERE activity_id=?", [id]);
