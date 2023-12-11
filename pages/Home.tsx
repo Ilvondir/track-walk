@@ -187,7 +187,12 @@ const Home = ({navigation}: any) => {
                     points: Point[]
                 }, i: number) => {
                     return (
-                        <View key={i} style={styles.window}>
+                        <TouchableOpacity
+                            key={i}
+                            style={styles.window}
+                            activeOpacity={1}
+                            onPress={() => navigation.navigate("Map", {show: a.id, add: Math.random()})}
+                        >
 
                             <View style={styles.window_section}>
                                 <View>
@@ -279,7 +284,7 @@ const Home = ({navigation}: any) => {
 
                             </View>
 
-                        </View>
+                        </TouchableOpacity>
                     )
                 })}
 
