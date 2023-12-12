@@ -4,8 +4,8 @@ import {Image, ScrollView, StyleSheet, Text, View} from "react-native";
 import {Activity} from "../models/Activity";
 import * as SQLite from "expo-sqlite";
 import TrackFirstActivity from "../components/TrackFirstActivity";
-import {reformatDate, sumTime, timeBetween} from "../commons/commons";
-import {Area, Chart, Line, VerticalAxis} from "react-native-responsive-linechart";
+import {bestTime, meanTime, reformatDate, sumTime, timeBetween} from "../commons/commons";
+import {BarChart} from "react-native-gifted-charts";
 
 
 let activs: Activity[] = [];
@@ -15,10 +15,7 @@ const Stats = ({navigation}: any) => {
     const [activities, setActivities] = useState([] as Activity[]);
     const [sumDistance, setSumDistance] = useState(0);
     const [times, setTimes] = useState([] as string[]);
-    const [chartPoints, setChartPoints] = useState([] as {
-        x: number,
-        y: number
-    }[])
+    const [chartPoints, setChartPoints] = useState([] as any[])
 
     const fetchDataFromDatabase = () => {
         db.transaction(
@@ -44,7 +41,14 @@ const Stats = ({navigation}: any) => {
 
                             setTimes(tab);
 
-                            let point = {x: i, y: a.distance};
+                            let point = {
+                                value: a.distance / 1000,
+                                topLabelComponent: () => (
+                                    <Text style={{
+                                        fontSize: 12,
+                                    }}>{(a.distance / 1000).toFixed(2)}</Text>
+                                ),
+                            };
                             points.push(point);
                         });
 
@@ -101,6 +105,22 @@ const Stats = ({navigation}: any) => {
                                 <Text style={styles.result}>{sumTime(times)}</Text>
                             </View>
 
+                            <View style={styles.span}>
+                                <Text style={styles.info}>Best time: </Text>
+                                <Text
+                                    style={styles.result}>
+                                    {bestTime(times)}
+                                </Text>
+                            </View>
+
+                            <View style={styles.span}>
+                                <Text style={styles.info}>Average time: </Text>
+                                <Text
+                                    style={styles.result}>
+                                    {meanTime(times)}
+                                </Text>
+                            </View>
+
                         </View>
 
                         <View style={styles.section}>
@@ -130,45 +150,22 @@ const Stats = ({navigation}: any) => {
 
                         </View>
 
-                        {chartPoints.length >= 2 &&
-                            <View style={[styles.section, {paddingVertical: "3%"}]}>
+                        <View style={[styles.section, {paddingTop: "3%"}]}>
+                            <Text>Distance (km)</Text>
+                            <BarChart
+                                data={chartPoints}
+                                showFractionalValues
+                                showYAxisIndices
+                                frontColor={'#FF474C'}
+                                barWidth={25}
+                                initialSpacing={5}
+                                spacing={5}
+                                maxValue={1.1 * Math.max(...chartPoints.map((p: any) => p.value))}
+                                noOfSections={8}
+                                width={270}
+                            />
 
-                                <Chart
-                                    style={{height: 200, width: '100%', backgroundColor: 'white'}}
-                                    xDomain={{min: 0, max: chartPoints.length - 1}}
-                                    yDomain={{min: 0, max: 1.2 * Math.max(...chartPoints.map((a: any) => a.y))}}
-                                    padding={{left: 35, bottom: 5, top: 5, right: 10}}
-                                    data={chartPoints}
-                                >
-                                    <VerticalAxis
-                                        tickCount={6}
-                                        theme={{
-                                            labels: {
-                                                formatter: (v) => (v / 1000).toFixed(2),
-                                            },
-                                            ticks: {stroke: {color: '#AAAAAA', width: 1.4}},
-                                        }}
-                                    />
-
-                                    <Area
-                                        theme={{
-                                            gradient: {
-                                                from: {color: '#FF474C', opacity: 0.8},
-                                                to: {color: '#FF474C', opacity: 0.2}
-                                            }
-                                        }}
-                                    />
-
-                                    <Line
-                                        theme={{
-                                            stroke: {color: '#FF474C', width: 2},
-                                            scatter: {default: {width: 8, height: 8, rx: 10, color: '#FF474C'}}
-                                        }}
-                                    />
-                                </Chart>
-
-                            </View>
-                        }
+                        </View>
                     </>
                 }
 

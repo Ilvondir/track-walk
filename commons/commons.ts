@@ -92,3 +92,38 @@ export const sumTime = (tab: string[]) => {
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
+
+export const bestTime = (times: string[]) => {
+    let best = "00:00:00";
+
+    for (const time of times) {
+        if (time > best) {
+            best = time;
+        }
+    }
+
+    return best;
+}
+
+export const meanTime = (times: string[]) => {
+
+    let sum = sumTime(times);
+
+    const [hours, minutes, seconds] = sum.split(':').map(Number);
+
+    const mili = (hours * 3600000) + (minutes * 60000) + (seconds * 1000);
+
+    let avgMili = mili / times.length;
+
+    const rh = Math.floor(avgMili / 3600000);
+    avgMili %= 3600000;
+
+    const rm = Math.floor(avgMili / 60000);
+    avgMili %= 60000;
+
+    const rs = Math.floor(avgMili / 1000);
+
+    const time = `${rh.toString().padStart(2, '0')}:${rm.toString().padStart(2, '0')}:${rs.toString().padStart(2, '0')}`;
+
+    return time;
+}
