@@ -113,8 +113,6 @@ const Tracking = ({navigation}: any) => {
 
                                 const dist = distance(loc.coords, lastMarker);
 
-                                console.log(dist);
-
                                 if (dist > 10) {
                                     const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
 
@@ -128,7 +126,6 @@ const Tracking = ({navigation}: any) => {
                                 }
 
                                 currentPosition = loc.coords as any;
-                                console.log(currentPosition);
 
                             })
                                 .then(res => {
@@ -181,9 +178,7 @@ const Tracking = ({navigation}: any) => {
         handleMarkers2.forEach((m: Point) => {
             db.transaction((tx: any) => {
                 tx.executeSql("INSERT INTO points (num, latitude, longitude, activity_id) VALUES (?, ?, ?, ?)",
-                    [m.num, m.latitude, m.longitude, id],
-                    (txObj: any, resultSet: any) => console.log(resultSet),
-                    (txObj: any, error: any) => console.error(error)
+                    [m.num, m.latitude, m.longitude, id]
                 );
             });
         });
@@ -201,7 +196,7 @@ const Tracking = ({navigation}: any) => {
 
 
     return (
-        <Wrapper navigation={navigation}>
+        <Wrapper navigation={navigation} title={"Tracking"}>
 
             <View
                 style={{height: "79.1%"}}
@@ -212,29 +207,15 @@ const Tracking = ({navigation}: any) => {
                     style={styles.map}
                     showsUserLocation={true}
                 >
-                    {markers.map((p: Point, i: number) => {
-                        if (i > 0) {
-                            const prevPoint = markers[i - 1];
-                            return (
-                                <Polyline
-                                    key={i}
-                                    coordinates={[
-                                        {
-                                            latitude: prevPoint.latitude,
-                                            longitude: prevPoint.longitude,
-                                        },
-                                        {
-                                            latitude: p.latitude,
-                                            longitude: p.longitude,
-                                        },
-                                    ]}
-                                    strokeWidth={2}
-                                    strokeColor={"#FF474C"}
-                                    strokeColors={["#FF474C"]}
-                                />
-                            );
-                        }
-                    })}
+                    <Polyline
+                        coordinates={markers.map((p: Point) => ({
+                            latitude: p.latitude,
+                            longitude: p.longitude,
+                        }))}
+                        strokeWidth={2}
+                        strokeColor={"#FF474C"}
+                        strokeColors={["#FF474C"]}
+                    />
                 </MapView>
 
                 <View

@@ -9,7 +9,6 @@ import * as SQLite from "expo-sqlite";
 import {useRoute} from "@react-navigation/native";
 
 let activs: Activity[] = [];
-let handleActivs: { id: number, start: string, end: string, distance: number, points: Point[] }[] = [];
 
 const Map = ({navigation}: any) => {
     const mapRef = useRef<MapView>(null);
@@ -88,14 +87,14 @@ const Map = ({navigation}: any) => {
                         setActivities(activitiesData);
                     };
 
-                    fetchPointsForActivities().then(r => console.log(r));
+                    fetchPointsForActivities().then(r => r);
                 },
                 (txObj: any, error: any) => console.error([error, txObj]));
         });
     }, [refresh]);
 
     return (
-        <Wrapper navigation={navigation}>
+        <Wrapper navigation={navigation} title={"Map"}>
             <MapView
                 ref={mapRef}
                 style={styles.map}

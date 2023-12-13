@@ -3,12 +3,12 @@ import {StyleSheet, View} from "react-native";
 import Header from "./Header";
 import Navbar from "./Navbar";
 
-const Wrapper = (props: { navigation: any, children: ReactNode }) => {
+const Wrapper = (props: { navigation: any, children: ReactNode, title: string }) => {
     const navigation = props.navigation;
 
     return (
         <View style={styles.container}>
-            <Header navigation={navigation}/>
+            <Header navigation={navigation} title={props.title}/>
 
             {props.children}
 

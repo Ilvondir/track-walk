@@ -52,7 +52,7 @@ const Home = ({navigation}: any) => {
 
         db.transaction((tx: any) => {
             tx.executeSql("SELECT * FROM activities ORDER BY id desc",
-                null,
+                [],
                 (txObj: any, resultSet: any) => {
                     activs = resultSet.rows._array
 
@@ -85,7 +85,7 @@ const Home = ({navigation}: any) => {
                         handleActivs = []
                     };
 
-                    fetchPointsForActivities().then(r => console.log(r));
+                    fetchPointsForActivities().then(r => r);
 
                 },
                 (txObj: any, error: any) => console.error([error, txObj]));
@@ -153,7 +153,7 @@ const Home = ({navigation}: any) => {
     }
 
     return (
-        <Wrapper navigation={navigation}>
+        <Wrapper navigation={navigation} title={"Home"}>
 
             <ScrollView
                 showsVerticalScrollIndicator={false}

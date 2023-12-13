@@ -23,7 +23,7 @@ const Stats = ({navigation}: any) => {
             (tx: any) => {
                 tx.executeSql(
                     "SELECT * FROM activities ORDER BY id ASC",
-                    null,
+                    [],
                     (txObj: any, resultSet: any) => {
                         activs = resultSet.rows._array;
 
@@ -34,7 +34,7 @@ const Stats = ({navigation}: any) => {
                         let distancePoints = [] as any[];
                         let timePoints = [] as any[];
 
-                        activs.map((a: Activity, i: number) => {
+                        activs.map((a: Activity) => {
                             d += a.distance;
 
                             let time = "";
@@ -81,7 +81,7 @@ const Stats = ({navigation}: any) => {
     }, []);
 
     return (
-        <Wrapper navigation={navigation}>
+        <Wrapper navigation={navigation} title={"Statistics"}>
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={{paddingHorizontal: "3%"}}

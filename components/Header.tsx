@@ -4,7 +4,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faArrowLeft, faLightbulb} from "@fortawesome/free-solid-svg-icons";
 import {Camera, FlashMode} from "expo-camera";
 
-const Header = (props: { navigation: any }) => {
+const Header = (props: { navigation: any, title: string }) => {
     const navigation = props.navigation;
     const [flashlight, setFlashlight] = useState(false as boolean);
 
@@ -52,7 +52,7 @@ const Header = (props: { navigation: any }) => {
             <Text
                 style={styles.brand}
             >
-                TrackWalk
+                {props.title}
             </Text>
 
             <TouchableOpacity
