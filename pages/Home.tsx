@@ -13,19 +13,13 @@ import TrackFirstActivity from "../components/TrackFirstActivity";
 import * as LocalAuthentication from "expo-local-authentication";
 
 let activs: Activity[] = [];
-let handleActivs: { id: number, start: string, end: string, distance: number, points: Point[] }[] = [];
+let handleActivs: any[] = [];
 
 const Home = ({navigation}: any) => {
     const db = SQLite.openDatabase("trackwalk");
     const route = useRoute();
     const [refresh, setRefresh] = useState(false as boolean);
-    const [activities, setActivities] = useState([] as {
-        id: number,
-        start: string,
-        end: string,
-        distance: number,
-        points: Point[]
-    }[]);
+    const [activities, setActivities] = useState([] as any[]);
 
 
     useEffect(() => {
@@ -224,30 +218,16 @@ const Home = ({navigation}: any) => {
                                     longitudeDelta: (Math.max(...a.points.map((p: Point) => p.longitude)) - Math.min(...a.points.map((p: Point) => p.longitude))) * 1.4,
                                 }}
                             >
-
-                                {a.points.map((p: Point, j: number) => {
-                                    if (j > 0) {
-                                        const prevPoint = a.points[j - 1];
-                                        return (
-                                            <Polyline
-                                                key={j}
-                                                coordinates={[
-                                                    {
-                                                        latitude: prevPoint.latitude,
-                                                        longitude: prevPoint.longitude,
-                                                    },
-                                                    {
-                                                        latitude: p.latitude,
-                                                        longitude: p.longitude,
-                                                    },
-                                                ]}
-                                                strokeWidth={2}
-                                                strokeColor={"#FF474C"}
-                                                strokeColors={["#FF474C"]}
-                                            />
-                                        );
-                                    }
-                                })}
+                                <Polyline
+                                    key={i}
+                                    coordinates={a.points.map((p: Point) => ({
+                                        latitude: p.latitude,
+                                        longitude: p.longitude,
+                                    }))}
+                                    strokeWidth={2}
+                                    strokeColor={"#FF474C"}
+                                    strokeColors={["#FF474C"]}
+                                />
 
                             </MapView>
 

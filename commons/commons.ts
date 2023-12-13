@@ -109,9 +109,7 @@ export const meanTime = (times: string[]) => {
 
     let sum = sumTime(times);
 
-    const [hours, minutes, seconds] = sum.split(':').map(Number);
-
-    const mili = (hours * 3600000) + (minutes * 60000) + (seconds * 1000);
+    const mili = getMilis(sum);
 
     let avgMili = mili / times.length;
 
@@ -123,7 +121,21 @@ export const meanTime = (times: string[]) => {
 
     const rs = Math.floor(avgMili / 1000);
 
-    const time = `${rh.toString().padStart(2, '0')}:${rm.toString().padStart(2, '0')}:${rs.toString().padStart(2, '0')}`;
+    return `${rh.toString().padStart(2, '0')}:${rm.toString().padStart(2, '0')}:${rs.toString().padStart(2, '0')}`;
+}
 
-    return time;
+export const getMilis = (time: string) => {
+
+    let [hours, minutes, seconds] = time.split(':').map(Number);
+
+    return (hours * 3600000) + (minutes * 60000) + (seconds * 1000);
+}
+
+export const timeToChart = (time: string) => {
+
+    let [hours, minutes, seconds] = time.split(':').map(Number);
+
+    minutes += hours * 60;
+    
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }

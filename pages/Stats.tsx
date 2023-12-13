@@ -4,7 +4,7 @@ import {Image, ScrollView, StyleSheet, Text, View} from "react-native";
 import {Activity} from "../models/Activity";
 import * as SQLite from "expo-sqlite";
 import TrackFirstActivity from "../components/TrackFirstActivity";
-import {bestTime, meanTime, reformatDate, sumTime, timeBetween} from "../commons/commons";
+import {bestTime, getMilis, meanTime, reformatDate, sumTime, timeBetween, timeToChart} from "../commons/commons";
 import {BarChart} from "react-native-gifted-charts";
 
 
@@ -15,7 +15,8 @@ const Stats = ({navigation}: any) => {
     const [activities, setActivities] = useState([] as Activity[]);
     const [sumDistance, setSumDistance] = useState(0);
     const [times, setTimes] = useState([] as string[]);
-    const [chartPoints, setChartPoints] = useState([] as any[])
+    const [distanceChartPoints, setDistanceChartPoints] = useState([] as any[]);
+    const [timeChartPoints, setTimeChartPoints] = useState([] as any[]);
 
     const fetchDataFromDatabase = () => {
         db.transaction(
@@ -30,7 +31,8 @@ const Stats = ({navigation}: any) => {
 
                         let d = 0;
                         let tab = [] as string[];
-                        let points = [] as any[];
+                        let distancePoints = [] as any[];
+                        let timePoints = [] as any[];
 
                         activs.map((a: Activity, i: number) => {
                             d += a.distance;
@@ -41,19 +43,30 @@ const Stats = ({navigation}: any) => {
 
                             setTimes(tab);
 
-                            let point = {
+                            let timePoint = {
+                                value: getMilis(time),
+                                topLabelComponent: () => (
+                                    <Text style={{
+                                        fontSize: 8,
+                                    }}>{timeToChart(time)}</Text>
+                                ),
+                            }
+
+                            let distPoint = {
                                 value: a.distance / 1000,
                                 topLabelComponent: () => (
                                     <Text style={{
-                                        fontSize: 12,
+                                        fontSize: 10,
                                     }}>{(a.distance / 1000).toFixed(2)}</Text>
                                 ),
                             };
-                            points.push(point);
+                            distancePoints.push(distPoint);
+                            timePoints.push(timePoint)
                         });
 
                         setSumDistance(d);
-                        setChartPoints(points);
+                        setDistanceChartPoints(distancePoints);
+                        setTimeChartPoints(timePoints);
 
                         activs = [];
                     },
@@ -123,6 +136,24 @@ const Stats = ({navigation}: any) => {
 
                         </View>
 
+                        <View style={[styles.section, {paddingTop: "3%"}]}>
+                            <Text>Time (MM:SS)</Text>
+                            <BarChart
+                                data={timeChartPoints}
+                                frontColor={'#FF474C'}
+                                barWidth={25}
+                                initialSpacing={5}
+                                spacing={5}
+                                maxValue={1.1 * Math.max(...timeChartPoints.map((p: any) => p.value))}
+                                noOfSections={6}
+                                width={270}
+                                scrollToEnd={true}
+                                isAnimated={true}
+                                hideYAxisText={true}
+                            />
+
+                        </View>
+
                         <View style={styles.section}>
 
                             <View style={styles.span}>
@@ -153,16 +184,18 @@ const Stats = ({navigation}: any) => {
                         <View style={[styles.section, {paddingTop: "3%"}]}>
                             <Text>Distance (km)</Text>
                             <BarChart
-                                data={chartPoints}
-                                showFractionalValues
-                                showYAxisIndices
+                                data={distanceChartPoints}
+                                showFractionalValues={true}
                                 frontColor={'#FF474C'}
                                 barWidth={25}
                                 initialSpacing={5}
                                 spacing={5}
-                                maxValue={1.1 * Math.max(...chartPoints.map((p: any) => p.value))}
-                                noOfSections={8}
+                                maxValue={1.1 * Math.max(...distanceChartPoints.map((p: any) => p.value))}
+                                noOfSections={6}
                                 width={270}
+                                scrollToEnd={true}
+                                isAnimated={true}
+                                hideYAxisText={true}
                             />
 
                         </View>
