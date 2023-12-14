@@ -85,8 +85,7 @@ const Stats = ({navigation}: any) => {
                         setSumDistance(d);
                         setDistanceChartPoints(distancePoints);
                         setTimeChartPoints(timePoints);
-
-                        console.log(bestActivity(activs));
+                        
                         bestId = bestActivity(activs);
                         activs.map((a: Activity) => a.id === bestId ? setBestActiv(a) : null);
                         db.transaction(tx => {
