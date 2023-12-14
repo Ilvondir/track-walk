@@ -1,115 +1,123 @@
 import React, {useEffect, useState} from 'react';
 import Wrapper from "../components/Wrapper";
-import {Image, ScrollView, StyleSheet, Text, View} from "react-native";
+import {Image, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {Activity} from "../models/Activity";
-import {Point} from "../models/Point";
 import * as SQLite from "expo-sqlite";
-import {useRoute} from "@react-navigation/native";
 import TrackFirstActivity from "../components/TrackFirstActivity";
-import {reformatDate, sumTime, timeBetween} from "../commons/commons";
-import {Area, Chart, Line, VerticalAxis} from "react-native-responsive-linechart";
+import {
+    bestActivity,
+    bestTime,
+    getMilis,
+    meanTime,
+    reformatDate,
+    speed,
+    sumTime,
+    timeBetween,
+    timeToChart
+} from "../commons/commons";
+import {BarChart} from "react-native-gifted-charts";
+import {Point} from "../models/Point";
+import MapView, {Polyline} from "react-native-maps";
+import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
+import {faClockFour, faRoad, faTachometerAltFast} from "@fortawesome/free-solid-svg-icons";
 
 
 let activs: Activity[] = [];
-let handleActivs: {
-    id: number,
-    start: string,
-    end: string,
-    distance: number,
-    points: Point[]
-}[] = [];
+let bestId = 0;
 
 const Stats = ({navigation}: any) => {
     const db = SQLite.openDatabase("trackwalk");
-    const route = useRoute();
-    const [refresh, setRefresh] = useState(false as boolean);
-    const [activities, setActivities] = useState([] as {
-        id: number,
-        start: string,
-        end: string,
-        distance: number,
-        points: Point[]
-    }[]);
+    const [activities, setActivities] = useState([] as Activity[]);
     const [sumDistance, setSumDistance] = useState(0);
     const [times, setTimes] = useState([] as string[]);
-    const [chartPoints, setChartPoints] = useState([] as {
-        x: number,
-        y: number
-    }[])
+    const [distanceChartPoints, setDistanceChartPoints] = useState([] as any[]);
+    const [timeChartPoints, setTimeChartPoints] = useState([] as any[]);
+    const [bestMarkers, setBestMarkers] = useState([] as Point[]);
+    const [bestActiv, setBestActiv] = useState({} as Activity);
+    const [dataLoaded, setDataLoaded] = useState(false);
 
     const fetchDataFromDatabase = () => {
-        db.transaction((tx: any) => {
-            tx.executeSql(
-                "SELECT * FROM activities ORDER BY id ASC",
-                null,
-                (txObj: any, resultSet: any) => {
-                    activs = resultSet.rows._array;
+        db.transaction(
+            (tx: any) => {
+                tx.executeSql(
+                    "SELECT * FROM activities ORDER BY id ASC",
+                    [],
+                    (txObj: any, resultSet: any) => {
+                        activs = resultSet.rows._array;
 
-                    const fetchPointsForActivities = async () => {
-                        for (const a of activs) {
-                            const points = await new Promise((resolve, reject) => {
-                                db.transaction((tx: any) => {
-                                    tx.executeSql(
-                                        "SELECT * FROM points WHERE activity_id=? ORDER BY num ASC",
-                                        [a.id],
-                                        (txObj: any, resultSet: any) => {
-                                            resolve(resultSet.rows._array);
-                                        },
-                                        (txObj: any, error: any) => {
-                                            reject(error);
-                                        }
-                                    );
-                                });
-                            });
-
-                            handleActivs.push({
-                                id: a.id,
-                                start: a.start,
-                                end: a.end,
-                                distance: a.distance,
-                                points: points as Point[],
-                            });
-                        }
-
-                        setActivities(handleActivs);
+                        setActivities(activs);
 
                         let d = 0;
                         let tab = [] as string[];
-                        let points = [] as any[];
+                        let distancePoints = [] as any[];
+                        let timePoints = [] as any[];
 
-                        activs.map((a: Activity, i: number) => {
+                        activs.map((a: Activity) => {
                             d += a.distance;
 
                             let time = "";
-
                             time = timeBetween(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start)));
                             tab.push(time);
 
                             setTimes(tab);
 
-                            let point = {x: i, y: a.distance};
-                            points.push(point);
+                            let timePoint = {
+                                value: getMilis(time),
+                                topLabelComponent: () => (
+                                    <Text style={{
+                                        fontSize: 8,
+                                    }}>{timeToChart(time)}</Text>
+                                ),
+                            }
+
+                            let distPoint = {
+                                value: a.distance / 1000,
+                                topLabelComponent: () => (
+                                    <Text style={{
+                                        fontSize: 10,
+                                    }}>{(a.distance / 1000).toFixed(2)}</Text>
+                                ),
+                            };
+                            distancePoints.push(distPoint);
+                            timePoints.push(timePoint);
                         });
+
                         setSumDistance(d);
-                        setChartPoints(points);
+                        setDistanceChartPoints(distancePoints);
+                        setTimeChartPoints(timePoints);
+                        
+                        bestId = bestActivity(activs);
+                        activs.map((a: Activity) => a.id === bestId ? setBestActiv(a) : null);
+                        db.transaction(tx => {
+                            tx.executeSql("SELECT * FROM points WHERE activity_id=? ORDER BY num ASC",
+                                [bestId],
+                                (txObj: any, resultSet: any) => {
+                                    const markers = resultSet.rows._array;
+                                    setBestMarkers(markers);
+                                }
+                            );
+                        })
 
                         activs = [];
-                        handleActivs = [];
-                    };
-
-                    fetchPointsForActivities();
-                },
-                (txObj: any, error: any) => console.error(error)
-            );
-        });
+                    },
+                    (txObj: any, err: any) => console.error(err)
+                );
+            }
+        );
     };
 
     useEffect(() => {
         fetchDataFromDatabase();
     }, []);
 
+    useEffect(() => {
+        if (bestMarkers.length > 0) {
+            setDataLoaded(true);
+        }
+    }, [bestActiv, bestMarkers]);
+
     return (
-        <Wrapper navigation={navigation}>
+        <Wrapper navigation={navigation} title={"Statistics"}>
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={{paddingHorizontal: "3%"}}
@@ -139,12 +147,123 @@ const Stats = ({navigation}: any) => {
 
                         </View>
 
+                        {dataLoaded && bestMarkers.length > 0 && bestActiv &&
+                            <TouchableOpacity
+                                style={styles.window}
+                                activeOpacity={1}
+                                onPress={() => navigation.navigate("Map", {show: bestActiv.id, add: Math.random()})}
+                            >
+
+                                <View style={styles.window_section}>
+                                    <View>
+                                        <Text style={styles.headText}>Best activity</Text>
+                                        <Text>{bestActiv.start}</Text>
+                                    </View>
+                                </View>
+
+                                <MapView
+                                    style={styles.map}
+                                    zoomEnabled={false}
+                                    zoomControlEnabled={false}
+                                    zoomTapEnabled={false}
+                                    scrollEnabled={false}
+                                    rotateEnabled={false}
+                                    initialRegion={{
+                                        latitude: (Math.max(...bestMarkers.map((p: Point) => p.latitude)) + Math.min(...bestMarkers.map((p: Point) => p.latitude))) / 2,
+                                        longitude: (Math.max(...bestMarkers.map((p: Point) => p.longitude)) + Math.min(...bestMarkers.map((p: Point) => p.longitude))) / 2,
+                                        latitudeDelta: (Math.max(...bestMarkers.map((p: Point) => p.latitude)) - Math.min(...bestMarkers.map((p: Point) => p.latitude))) * 1.4,
+                                        longitudeDelta: (Math.max(...bestMarkers.map((p: Point) => p.longitude)) - Math.min(...bestMarkers.map((p: Point) => p.longitude))) * 1.4,
+                                    }}
+                                >
+                                    <Polyline
+                                        coordinates={bestMarkers.map((p: Point) => ({
+                                            latitude: p.latitude,
+                                            longitude: p.longitude,
+                                        }))}
+                                        strokeWidth={2}
+                                        strokeColor={"#FF474C"}
+                                        strokeColors={["#FF474C"]}
+                                    />
+
+                                </MapView>
+
+                                <View style={[styles.window_section, {flexDirection: "row"}]}>
+
+                                    <View style={styles.column}>
+                                        <FontAwesomeIcon icon={faRoad} size={20} style={{color: "#FF474C"}}/>
+                                        {bestActiv.distance < 1000 &&
+                                            <Text style={styles.column_text}>
+                                                {bestActiv.distance.toFixed(2)} m
+                                            </Text>
+                                        }
+
+                                        {bestActiv.distance >= 1000 &&
+                                            <Text style={styles.column_text}>
+                                                {(bestActiv.distance / 1000).toFixed(2)} km
+                                            </Text>
+                                        }
+                                    </View>
+
+                                    <View style={styles.column}>
+                                        <FontAwesomeIcon icon={faClockFour} size={20} style={{color: "#FF474C"}}/>
+                                        <Text style={styles.column_text}>
+                                            {timeBetween(Date.parse(reformatDate(bestActiv.end)) - Date.parse(reformatDate(bestActiv.start)))}
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.column}>
+                                        <FontAwesomeIcon icon={faTachometerAltFast} size={20}
+                                                         style={{color: "#FF474C"}}/>
+                                        <Text style={styles.column_text}>
+                                            {speed(bestActiv).toFixed(2)} km/h
+                                        </Text>
+                                    </View>
+
+                                </View>
+
+                            </TouchableOpacity>
+                        }
+
                         <View style={styles.section}>
 
                             <View style={styles.span}>
-                                <Text style={styles.info}>Total time: </Text>
+                                <Text style={styles.info}>Total time:</Text>
                                 <Text style={styles.result}>{sumTime(times)}</Text>
                             </View>
+
+                            <View style={styles.span}>
+                                <Text style={styles.info}>Best time: </Text>
+                                <Text
+                                    style={styles.result}>
+                                    {bestTime(times)}
+                                </Text>
+                            </View>
+
+                            <View style={styles.span}>
+                                <Text style={styles.info}>Average time: </Text>
+                                <Text
+                                    style={styles.result}>
+                                    {meanTime(times)}
+                                </Text>
+                            </View>
+
+                        </View>
+
+                        <View style={[styles.section, {paddingTop: "3%"}]}>
+                            <Text>Time (MM:SS)</Text>
+                            <BarChart
+                                data={timeChartPoints}
+                                frontColor={'#FF474C'}
+                                barWidth={25}
+                                initialSpacing={5}
+                                spacing={5}
+                                maxValue={1.1 * Math.max(...timeChartPoints.map((p: any) => p.value))}
+                                noOfSections={6}
+                                width={270}
+                                scrollToEnd={true}
+                                isAnimated={true}
+                                hideYAxisText={true}
+                            />
 
                         </View>
 
@@ -175,40 +294,24 @@ const Stats = ({navigation}: any) => {
 
                         </View>
 
-                        {chartPoints.length >= 2 &&
-                            <View style={styles.section}>
+                        <View style={[styles.section, {paddingTop: "3%"}]}>
+                            <Text>Distance (km)</Text>
+                            <BarChart
+                                data={distanceChartPoints}
+                                showFractionalValues={true}
+                                frontColor={'#FF474C'}
+                                barWidth={25}
+                                initialSpacing={5}
+                                spacing={5}
+                                maxValue={1.1 * Math.max(...distanceChartPoints.map((p: any) => p.value))}
+                                noOfSections={6}
+                                width={270}
+                                scrollToEnd={true}
+                                isAnimated={true}
+                                hideYAxisText={true}
+                            />
 
-                                <Chart
-                                    style={{height: 200, width: '100%', backgroundColor: 'white'}}
-                                    xDomain={{min: 0, max: chartPoints.length - 1}}
-                                    yDomain={{min: 0, max: 1.2 * Math.max(...chartPoints.map((a: any) => a.y))}}
-                                    padding={{left: 25, bottom: 5, top: 5, right: 10}}
-                                    data={chartPoints}
-                                >
-                                    <VerticalAxis
-                                        tickCount={6}
-                                        theme={{
-                                            labels: {
-                                                formatter: (v) => (v / 1000).toFixed(2),
-                                            },
-                                            ticks: {stroke: {color: '#AAAAAA', width: 1.4}},
-                                        }}
-                                    />
-
-                                    <Area
-                                        theme={{gradient: {from: {color: '#FF474C', opacity: 0.8}, to: {color: '#FF474C', opacity: 0.2}}}}
-                                    />
-
-                                    <Line
-                                        theme={{
-                                            stroke: {color: '#FF474C', width: 2},
-                                            scatter: {default: {width: 8, height: 8, rx: 10, color: '#FF474C'}}
-                                        }}
-                                    />
-                                </Chart>
-
-                            </View>
-                        }
+                        </View>
                     </>
                 }
 
@@ -262,5 +365,37 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         fontSize: 35,
         marginLeft: "1%"
+    },
+    window: {
+        width: "100%",
+        aspectRatio: 1,
+        backgroundColor: "white",
+        marginBottom: "3%",
+        elevation: 1
+    },
+    window_section: {
+        width: "100%",
+        height: "20%",
+        padding: "2%",
+        flexDirection: "row"
+    },
+    map: {
+        width: "100%",
+        height: "60%"
+    },
+    headText: {
+        fontWeight: "700",
+        color: "#FF474C",
+        fontSize: 24
+    },
+    column: {
+        width: "33.3%",
+        alignItems: "center",
+        justifyContent: "center"
+    },
+    column_text: {
+        fontWeight: "700",
+        fontSize: 18,
+        marginTop: "3%"
     }
 })

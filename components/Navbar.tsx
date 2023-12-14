@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
-import {faChartBar, faHome, faStopwatch} from "@fortawesome/free-solid-svg-icons";
+import {faChartBar, faHome, faMap, faStopwatch} from "@fortawesome/free-solid-svg-icons";
 import {useRoute} from "@react-navigation/native";
 
 const Navbar = (props: { navigation: any }) => {
@@ -31,7 +31,7 @@ const Navbar = (props: { navigation: any }) => {
             <TouchableOpacity
                 activeOpacity={0.6}
                 style={[styles.link, route.name == "Stats" ? {opacity: 1} : {opacity: 0.7}]}
-                onPress={() => navigation.navigate("Stats", {add1: Math.random()})}
+                onPress={() => navigation.navigate("Stats")}
             >
                 <FontAwesomeIcon
                     style={styles.text}
@@ -63,6 +63,23 @@ const Navbar = (props: { navigation: any }) => {
             </TouchableOpacity>
 
 
+            <TouchableOpacity
+                activeOpacity={0.6}
+                style={[styles.link, route.name == "Map" ? {opacity: 1} : {opacity: 0.7}]}
+                onPress={() => navigation.navigate("Map", {show: -1, add: Math.random()})}
+            >
+                <FontAwesomeIcon
+                    icon={faMap}
+                    size={20}
+                    style={styles.text}
+                />
+
+                <Text style={[styles.text, {marginTop: "2%"}]}>
+                    Map
+                </Text>
+
+            </TouchableOpacity>
+
         </View>
     );
 };
@@ -76,7 +93,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
     },
     link: {
-        width: "33.3%",
+        width: "25%",
         justifyContent: "center",
         alignItems: "center",
         color: "white"

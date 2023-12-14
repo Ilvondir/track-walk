@@ -92,3 +92,69 @@ export const sumTime = (tab: string[]) => {
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
+
+export const bestTime = (times: string[]) => {
+    let best = "00:00:00";
+
+    for (const time of times) {
+        if (time > best) {
+            best = time;
+        }
+    }
+
+    return best;
+}
+
+export const meanTime = (times: string[]) => {
+
+    let sum = sumTime(times);
+
+    const mili = getMilis(sum);
+
+    let avgMili = mili / times.length;
+
+    const rh = Math.floor(avgMili / 3600000);
+    avgMili %= 3600000;
+
+    const rm = Math.floor(avgMili / 60000);
+    avgMili %= 60000;
+
+    const rs = Math.floor(avgMili / 1000);
+
+    return `${rh.toString().padStart(2, '0')}:${rm.toString().padStart(2, '0')}:${rs.toString().padStart(2, '0')}`;
+}
+
+export const getMilis = (time: string) => {
+
+    let [hours, minutes, seconds] = time.split(':').map(Number);
+
+    return (hours * 3600000) + (minutes * 60000) + (seconds * 1000);
+}
+
+export const timeToChart = (time: string) => {
+
+    let [hours, minutes, seconds] = time.split(':').map(Number);
+
+    minutes += hours * 60;
+
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+export const bestActivity = (activs: Activity[]) => {
+    let bestId = 0;
+    let bestMetric = 0;
+
+    activs.forEach((a: Activity) => {
+        let milis = getMilis(timeBetween(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start))));
+        let metric = Math.pow(a.distance / 1000, 2) / (milis / 3600000);
+
+        // metric = V * s = s^2 / t
+
+        if (metric > bestMetric) {
+            bestMetric = metric;
+            bestId = a.id;
+        }
+    });
+
+    return bestId;
+};

@@ -10,21 +10,16 @@ import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faClockFour, faRoad, faTachometerAltFast, faTrashCan} from "@fortawesome/free-solid-svg-icons";
 import {useRoute} from "@react-navigation/native";
 import TrackFirstActivity from "../components/TrackFirstActivity";
+import * as LocalAuthentication from "expo-local-authentication";
 
 let activs: Activity[] = [];
-let handleActivs: { id: number, start: string, end: string, distance: number, points: Point[] }[] = [];
+let handleActivs: any[] = [];
 
 const Home = ({navigation}: any) => {
     const db = SQLite.openDatabase("trackwalk");
     const route = useRoute();
     const [refresh, setRefresh] = useState(false as boolean);
-    const [activities, setActivities] = useState([] as {
-        id: number,
-        start: string,
-        end: string,
-        distance: number,
-        points: Point[]
-    }[]);
+    const [activities, setActivities] = useState([] as any[]);
 
 
     useEffect(() => {
@@ -57,7 +52,7 @@ const Home = ({navigation}: any) => {
 
         db.transaction((tx: any) => {
             tx.executeSql("SELECT * FROM activities ORDER BY id desc",
-                null,
+                [],
                 (txObj: any, resultSet: any) => {
                     activs = resultSet.rows._array
 
@@ -90,10 +85,10 @@ const Home = ({navigation}: any) => {
                         handleActivs = []
                     };
 
-                    fetchPointsForActivities();
+                    fetchPointsForActivities().then(r => r);
 
                 },
-                (txObj: any, error: any) => console.error(error));
+                (txObj: any, error: any) => console.error([error, txObj]));
         });
 
     }, [refresh]);
@@ -111,15 +106,45 @@ const Home = ({navigation}: any) => {
                 {
                     text: 'Delete',
                     onPress: () => {
-                        db.transaction((tx: any) => {
-                            tx.executeSql("DELETE FROM points WHERE activity_id=?", [id]);
-                        });
-                        db.transaction((tx: any) => {
-                            tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
-                        });
 
-                        setActivities([]);
-                        setRefresh(!refresh);
+                        LocalAuthentication.isEnrolledAsync()
+                            .then(check => {
+
+                                if (check) {
+
+                                    LocalAuthentication.authenticateAsync({promptMessage: "Please authenticate first."})
+                                        .then(res => {
+
+                                            if (res.success) {
+                                                db.transaction((tx: any) => {
+                                                    tx.executeSql("DELETE FROM points WHERE activity_id=?", [id]);
+                                                });
+                                                db.transaction((tx: any) => {
+                                                    tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
+                                                });
+
+                                                setActivities([]);
+                                                setRefresh(!refresh);
+                                            }
+                                        })
+                                        .catch(err => console.error(err))
+
+                                } else {
+
+                                    db.transaction((tx: any) => {
+                                        tx.executeSql("DELETE FROM points WHERE activity_id=?", [id]);
+                                    });
+                                    db.transaction((tx: any) => {
+                                        tx.executeSql("DELETE FROM activities WHERE id=?", [id]);
+                                    });
+
+                                    setActivities([]);
+                                    setRefresh(!refresh);
+                                }
+
+
+                            })
+                            .catch(err => console.error(err));
                     },
                     style: 'destructive',
                 }
@@ -128,7 +153,7 @@ const Home = ({navigation}: any) => {
     }
 
     return (
-        <Wrapper navigation={navigation}>
+        <Wrapper navigation={navigation} title={"Home"}>
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
@@ -156,7 +181,12 @@ const Home = ({navigation}: any) => {
                     points: Point[]
                 }, i: number) => {
                     return (
-                        <View key={i} style={styles.window}>
+                        <TouchableOpacity
+                            key={i}
+                            style={styles.window}
+                            activeOpacity={1}
+                            onPress={() => navigation.navigate("Map", {show: a.id, add: Math.random()})}
+                        >
 
                             <View style={styles.window_section}>
                                 <View>
@@ -188,30 +218,16 @@ const Home = ({navigation}: any) => {
                                     longitudeDelta: (Math.max(...a.points.map((p: Point) => p.longitude)) - Math.min(...a.points.map((p: Point) => p.longitude))) * 1.4,
                                 }}
                             >
-
-                                {a.points.map((p: Point, j: number) => {
-                                    if (j > 0) {
-                                        const prevPoint = a.points[j - 1];
-                                        return (
-                                            <Polyline
-                                                key={j}
-                                                coordinates={[
-                                                    {
-                                                        latitude: prevPoint.latitude,
-                                                        longitude: prevPoint.longitude,
-                                                    },
-                                                    {
-                                                        latitude: p.latitude,
-                                                        longitude: p.longitude,
-                                                    },
-                                                ]}
-                                                strokeWidth={2}
-                                                strokeColor={"#FF474C"}
-                                                strokeColors={["#FF474C"]}
-                                            />
-                                        );
-                                    }
-                                })}
+                                <Polyline
+                                    key={i}
+                                    coordinates={a.points.map((p: Point) => ({
+                                        latitude: p.latitude,
+                                        longitude: p.longitude,
+                                    }))}
+                                    strokeWidth={2}
+                                    strokeColor={"#FF474C"}
+                                    strokeColors={["#FF474C"]}
+                                />
 
                             </MapView>
 
@@ -248,7 +264,7 @@ const Home = ({navigation}: any) => {
 
                             </View>
 
-                        </View>
+                        </TouchableOpacity>
                     )
                 })}
 

@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import Wrapper from "../components/Wrapper";
-import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {StyleSheet, Text, ToastAndroid, TouchableOpacity, View} from "react-native";
 import MapView, {Polyline} from "react-native-maps";
 import * as Location from 'expo-location'
 import {LocationSubscription} from 'expo-location'
@@ -30,27 +30,37 @@ const Tracking = ({navigation}: any) => {
     useEffect(() => {
 
         Location.requestForegroundPermissionsAsync()
-            .then(() => {
+            .then(res => {
 
-                Location.getCurrentPositionAsync()
-                    .then((loc: any) => {
-                        if (map.current)
-                            map.current.animateToRegion({
-                                latitudeDelta: .009, longitudeDelta: .009,
-                                latitude: loc.coords.latitude,
-                                longitude: loc.coords.longitude
-                            });
-                    })
+                if (!res.granted) {
+                    ToastAndroid.showWithGravity(
+                        "App doesn't have permissions to do that.",
+                        ToastAndroid.SHORT,
+                        ToastAndroid.CENTER
+                    );
+                    navigation.navigate("Home", {add: Math.random()});
+                } else {
+
+                    Location.getCurrentPositionAsync()
+                        .then((loc: any) => {
+                            if (map.current)
+                                map.current.animateToRegion({
+                                    latitudeDelta: .009, longitudeDelta: .009,
+                                    latitude: loc.coords.latitude,
+                                    longitude: loc.coords.longitude
+                                });
+                        });
+
+                }
 
             })
-            .catch(() => navigation.navigate("Home"));
+            .catch(() => navigation.navigate("Home", {add: Math.random()}));
 
     }, []);
 
     const setNewNow = () => {
         setNow(getNow());
     }
-
 
     const start = () => {
 
@@ -59,66 +69,74 @@ const Tracking = ({navigation}: any) => {
         handleMarkers2 = [];
 
         Location.requestForegroundPermissionsAsync()
-            .then(() => {
+            .then(res => {
 
-                Location.getCurrentPositionAsync()
-                    .then(suc => {
+                if (!res.granted) {
+                    ToastAndroid.showWithGravity(
+                        "App doesn't have permissions to do that.",
+                        ToastAndroid.SHORT,
+                        ToastAndroid.CENTER
+                    );
+                    navigation.navigate("Home", {add: Math.random()})
+                } else {
 
-                        currentPosition = suc.coords;
+                    Location.getCurrentPositionAsync()
+                        .then(suc => {
 
-                        if (map.current)
-                            map.current.animateToRegion({
-                                latitudeDelta: .009, longitudeDelta: .009,
-                                latitude: suc.coords.latitude,
-                                longitude: suc.coords.longitude
-                            });
+                            currentPosition = suc.coords;
 
-                        const first = new Point(0, pointNum, suc.coords.longitude, suc.coords.latitude, 0);
-                        activ.start = getNow();
+                            if (map.current)
+                                map.current.animateToRegion({
+                                    latitudeDelta: .009, longitudeDelta: .009,
+                                    latitude: suc.coords.latitude,
+                                    longitude: suc.coords.longitude
+                                });
 
-                        setNewNow();
-                        intervalID = setInterval(() => setNewNow(), 1000);
+                            const first = new Point(0, pointNum, suc.coords.longitude, suc.coords.latitude, 0);
+                            activ.start = getNow();
 
-                        lastMarker = first;
-                        handleMarkers.push(first);
-                        handleMarkers2.push(first);
-                        setMarkers(handleMarkers);
+                            setNewNow();
+                            intervalID = setInterval(() => setNewNow(), 1000);
 
-                        setInWork(true);
-                        handleInWork = true;
-                        pointNum++;
+                            lastMarker = first;
+                            handleMarkers.push(first);
+                            handleMarkers2.push(first);
+                            setMarkers(handleMarkers);
 
-                        Location.watchPositionAsync({
-                            accuracy: Location.Accuracy.BestForNavigation
-                        }, (loc) => {
+                            setInWork(true);
+                            handleInWork = true;
+                            pointNum++;
 
-                            const dist = distance(loc.coords, lastMarker);
+                            Location.watchPositionAsync({
+                                accuracy: Location.Accuracy.BestForNavigation
+                            }, (loc) => {
 
-                            console.log(dist);
+                                const dist = distance(loc.coords, lastMarker);
 
-                            if (dist > 10) {
-                                const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
+                                if (dist > 10) {
+                                    const nP = new Point(0, pointNum, loc.coords.longitude, loc.coords.latitude, 0);
 
-                                sumDistance += dist;
+                                    sumDistance += dist;
 
-                                pointNum++;
-                                handleMarkers.push(nP);
-                                handleMarkers2.push(nP);
-                                setMarkers([...handleMarkers]);
-                                lastMarker = nP;
-                            }
+                                    pointNum++;
+                                    handleMarkers.push(nP);
+                                    handleMarkers2.push(nP);
+                                    setMarkers([...handleMarkers]);
+                                    lastMarker = nP;
+                                }
 
-                            currentPosition = loc.coords as any;
-                            console.log(currentPosition);
+                                currentPosition = loc.coords as any;
 
+                            })
+                                .then(res => {
+                                    let id: any;
+
+                                    id = setInterval(() => removeSub(res, id), 5000)
+                                });
                         })
-                            .then(res => {
-                                let id: any;
-
-                                id = setInterval(() => removeSub(res, id), 5000)
-                            });
-                    })
+                }
             })
+            .catch(() => navigation.navigate("Home", {add: Math.random()}));
     }
 
     const removeSub = (res: LocationSubscription, id: any) => {
@@ -160,9 +178,7 @@ const Tracking = ({navigation}: any) => {
         handleMarkers2.forEach((m: Point) => {
             db.transaction((tx: any) => {
                 tx.executeSql("INSERT INTO points (num, latitude, longitude, activity_id) VALUES (?, ?, ?, ?)",
-                    [m.num, m.latitude, m.longitude, id],
-                    (txObj: any, resultSet: any) => console.log(resultSet),
-                    (txObj: any, error: any) => console.error(error)
+                    [m.num, m.latitude, m.longitude, id]
                 );
             });
         });
@@ -180,7 +196,7 @@ const Tracking = ({navigation}: any) => {
 
 
     return (
-        <Wrapper navigation={navigation}>
+        <Wrapper navigation={navigation} title={"Tracking"}>
 
             <View
                 style={{height: "79.1%"}}
@@ -191,29 +207,15 @@ const Tracking = ({navigation}: any) => {
                     style={styles.map}
                     showsUserLocation={true}
                 >
-                    {markers.map((p: Point, i: number) => {
-                        if (i > 0) {
-                            const prevPoint = markers[i - 1];
-                            return (
-                                <Polyline
-                                    key={i}
-                                    coordinates={[
-                                        {
-                                            latitude: prevPoint.latitude,
-                                            longitude: prevPoint.longitude,
-                                        },
-                                        {
-                                            latitude: p.latitude,
-                                            longitude: p.longitude,
-                                        },
-                                    ]}
-                                    strokeWidth={2}
-                                    strokeColor={"#FF474C"}
-                                    strokeColors={["#FF474C"]}
-                                />
-                            );
-                        }
-                    })}
+                    <Polyline
+                        coordinates={markers.map((p: Point) => ({
+                            latitude: p.latitude,
+                            longitude: p.longitude,
+                        }))}
+                        strokeWidth={2}
+                        strokeColor={"#FF474C"}
+                        strokeColors={["#FF474C"]}
+                    />
                 </MapView>
 
                 <View

@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Tracking from "./pages/Tracking";
 import Stats from "./pages/Stats";
 import Submit from "./pages/Submit";
+import Map from "./pages/Map";
 
 const Stack = createNativeStackNavigator();
 
@@ -17,6 +18,7 @@ const App = () => {
                 <Stack.Screen name="Home" component={Home}/>
                 <Stack.Screen name="Stats" component={Stats}/>
                 <Stack.Screen name="Tracking" component={Tracking}/>
+                <Stack.Screen name="Map" component={Map}/>
                 <Stack.Screen name="Submit" component={Submit}/>
             </Stack.Navigator>
         </NavigationContainer>
