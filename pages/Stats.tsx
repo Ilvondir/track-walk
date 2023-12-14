@@ -16,13 +16,14 @@ import {
     timeToChart
 } from "../commons/commons";
 import {BarChart} from "react-native-gifted-charts";
-import MapView, {Polyline} from "react-native-maps";
 import {Point} from "../models/Point";
+import MapView, {Polyline} from "react-native-maps";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faClockFour, faRoad, faTachometerAltFast} from "@fortawesome/free-solid-svg-icons";
 
 
 let activs: Activity[] = [];
+let bestId = 0;
 
 const Stats = ({navigation}: any) => {
     const db = SQLite.openDatabase("trackwalk");
@@ -31,7 +32,9 @@ const Stats = ({navigation}: any) => {
     const [times, setTimes] = useState([] as string[]);
     const [distanceChartPoints, setDistanceChartPoints] = useState([] as any[]);
     const [timeChartPoints, setTimeChartPoints] = useState([] as any[]);
-    const [a, setA] = useState({} as any);
+    const [bestMarkers, setBestMarkers] = useState([] as Point[]);
+    const [bestActiv, setBestActiv] = useState({} as Activity);
+    const [dataLoaded, setDataLoaded] = useState(false);
 
     const fetchDataFromDatabase = () => {
         db.transaction(
@@ -83,14 +86,18 @@ const Stats = ({navigation}: any) => {
                         setDistanceChartPoints(distancePoints);
                         setTimeChartPoints(timePoints);
 
-                        bestActivity(activs)
-                            .then((result: any) => {
-                                console.log(result);
-                                setA(result);
-                            })
-                            .catch((error: any) => {
-                                console.error(error);
-                            });
+                        console.log(bestActivity(activs));
+                        bestId = bestActivity(activs);
+                        activs.map((a: Activity) => a.id === bestId ? setBestActiv(a) : null);
+                        db.transaction(tx => {
+                            tx.executeSql("SELECT * FROM points WHERE activity_id=? ORDER BY num ASC",
+                                [bestId],
+                                (txObj: any, resultSet: any) => {
+                                    const markers = resultSet.rows._array;
+                                    setBestMarkers(markers);
+                                }
+                            );
+                        })
 
                         activs = [];
                     },
@@ -102,8 +109,13 @@ const Stats = ({navigation}: any) => {
 
     useEffect(() => {
         fetchDataFromDatabase();
-
     }, []);
+
+    useEffect(() => {
+        if (bestMarkers.length > 0) {
+            setDataLoaded(true);
+        }
+    }, [bestActiv, bestMarkers]);
 
     return (
         <Wrapper navigation={navigation} title={"Statistics"}>
@@ -136,79 +148,82 @@ const Stats = ({navigation}: any) => {
 
                         </View>
 
-                        <TouchableOpacity
-                            style={styles.window}
-                            activeOpacity={1}
-                            onPress={() => navigation.navigate("Map", {show: a.id, add: Math.random()})}
-                        >
-
-                            <View style={styles.window_section}>
-                                <View>
-                                    <Text style={styles.headText}>Best activity</Text>
-                                    <Text>{a.start}</Text>
-                                </View>
-                            </View>
-
-                            <MapView
-                                style={styles.map}
-                                zoomEnabled={false}
-                                zoomControlEnabled={false}
-                                zoomTapEnabled={false}
-                                scrollEnabled={false}
-                                rotateEnabled={false}
-                                initialRegion={{
-                                    latitude: (Math.max(...a.points.map((p: Point) => p.latitude)) + Math.min(...a.points.map((p: Point) => p.latitude))) / 2,
-                                    longitude: (Math.max(...a.points.map((p: Point) => p.longitude)) + Math.min(...a.points.map((p: Point) => p.longitude))) / 2,
-                                    latitudeDelta: (Math.max(...a.points.map((p: Point) => p.latitude)) - Math.min(...a.points.map((p: Point) => p.latitude))) * 1.4,
-                                    longitudeDelta: (Math.max(...a.points.map((p: Point) => p.longitude)) - Math.min(...a.points.map((p: Point) => p.longitude))) * 1.4,
-                                }}
+                        {dataLoaded && bestMarkers.length > 0 && bestActiv &&
+                            <TouchableOpacity
+                                style={styles.window}
+                                activeOpacity={1}
+                                onPress={() => navigation.navigate("Map", {show: bestActiv.id, add: Math.random()})}
                             >
-                                <Polyline
-                                    coordinates={a.points.map((p: Point) => ({
-                                        latitude: p.latitude,
-                                        longitude: p.longitude,
-                                    }))}
-                                    strokeWidth={2}
-                                    strokeColor={"#FF474C"}
-                                    strokeColors={["#FF474C"]}
-                                />
 
-                            </MapView>
+                                <View style={styles.window_section}>
+                                    <View>
+                                        <Text style={styles.headText}>Best activity</Text>
+                                        <Text>{bestActiv.start}</Text>
+                                    </View>
+                                </View>
 
-                            <View style={[styles.window_section, {flexDirection: "row"}]}>
+                                <MapView
+                                    style={styles.map}
+                                    zoomEnabled={false}
+                                    zoomControlEnabled={false}
+                                    zoomTapEnabled={false}
+                                    scrollEnabled={false}
+                                    rotateEnabled={false}
+                                    initialRegion={{
+                                        latitude: (Math.max(...bestMarkers.map((p: Point) => p.latitude)) + Math.min(...bestMarkers.map((p: Point) => p.latitude))) / 2,
+                                        longitude: (Math.max(...bestMarkers.map((p: Point) => p.longitude)) + Math.min(...bestMarkers.map((p: Point) => p.longitude))) / 2,
+                                        latitudeDelta: (Math.max(...bestMarkers.map((p: Point) => p.latitude)) - Math.min(...bestMarkers.map((p: Point) => p.latitude))) * 1.4,
+                                        longitudeDelta: (Math.max(...bestMarkers.map((p: Point) => p.longitude)) - Math.min(...bestMarkers.map((p: Point) => p.longitude))) * 1.4,
+                                    }}
+                                >
+                                    <Polyline
+                                        coordinates={bestMarkers.map((p: Point) => ({
+                                            latitude: p.latitude,
+                                            longitude: p.longitude,
+                                        }))}
+                                        strokeWidth={2}
+                                        strokeColor={"#FF474C"}
+                                        strokeColors={["#FF474C"]}
+                                    />
 
-                                <View style={styles.column}>
-                                    <FontAwesomeIcon icon={faRoad} size={20} style={{color: "#FF474C"}}/>
-                                    {a.distance < 1000 &&
+                                </MapView>
+
+                                <View style={[styles.window_section, {flexDirection: "row"}]}>
+
+                                    <View style={styles.column}>
+                                        <FontAwesomeIcon icon={faRoad} size={20} style={{color: "#FF474C"}}/>
+                                        {bestActiv.distance < 1000 &&
+                                            <Text style={styles.column_text}>
+                                                {bestActiv.distance.toFixed(2)} m
+                                            </Text>
+                                        }
+
+                                        {bestActiv.distance >= 1000 &&
+                                            <Text style={styles.column_text}>
+                                                {(bestActiv.distance / 1000).toFixed(2)} km
+                                            </Text>
+                                        }
+                                    </View>
+
+                                    <View style={styles.column}>
+                                        <FontAwesomeIcon icon={faClockFour} size={20} style={{color: "#FF474C"}}/>
                                         <Text style={styles.column_text}>
-                                            {a.distance.toFixed(2)} m
+                                            {timeBetween(Date.parse(reformatDate(bestActiv.end)) - Date.parse(reformatDate(bestActiv.start)))}
                                         </Text>
-                                    }
+                                    </View>
 
-                                    {a.distance >= 1000 &&
+                                    <View style={styles.column}>
+                                        <FontAwesomeIcon icon={faTachometerAltFast} size={20}
+                                                         style={{color: "#FF474C"}}/>
                                         <Text style={styles.column_text}>
-                                            {(a.distance / 1000).toFixed(2)} km
+                                            {speed(bestActiv).toFixed(2)} km/h
                                         </Text>
-                                    }
+                                    </View>
+
                                 </View>
 
-                                <View style={styles.column}>
-                                    <FontAwesomeIcon icon={faClockFour} size={20} style={{color: "#FF474C"}}/>
-                                    <Text style={styles.column_text}>
-                                        {timeBetween(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start)))}
-                                    </Text>
-                                </View>
-
-                                <View style={styles.column}>
-                                    <FontAwesomeIcon icon={faTachometerAltFast} size={20} style={{color: "#FF474C"}}/>
-                                    <Text style={styles.column_text}>
-                                        {speed(a).toFixed(2)} km/h
-                                    </Text>
-                                </View>
-
-                            </View>
-
-                        </TouchableOpacity>
+                            </TouchableOpacity>
+                        }
 
                         <View style={styles.section}>
 

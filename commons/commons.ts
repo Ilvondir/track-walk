@@ -1,6 +1,5 @@
 import {Activity} from "../models/Activity";
 import {Point} from "../models/Point";
-import {openDatabase} from "expo-sqlite";
 
 export const distance = (m1: any, m2: Point) => {
     let lat1 = m1.latitude;
@@ -141,63 +140,21 @@ export const timeToChart = (time: string) => {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-export const bestActivity = (activs: Activity[]): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        let bestId = 0;
-        let bestMetric = 0;
-        let best: {
-            id: number,
-            start: string,
-            end: string,
-            distance: number,
-            points: []
-        };
+export const bestActivity = (activs: Activity[]) => {
+    let bestId = 0;
+    let bestMetric = 0;
 
-        activs.forEach((a: Activity) => {
-            let milis = getMilis(timeBetween(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start))));
-            let metric = milis * milis / a.distance;
+    activs.forEach((a: Activity) => {
+        let milis = getMilis(timeBetween(Date.parse(reformatDate(a.end)) - Date.parse(reformatDate(a.start))));
+        let metric = Math.pow(a.distance / 1000, 2) / (milis / 3600000);
 
-            if (metric > bestMetric) {
-                bestMetric = metric;
-                bestId = a.id;
-            }
-        });
+        // metric = V * s = s^2 / t
 
-        const db = openDatabase("trackwalk");
-
-        db.transaction((tx) => {
-            // @ts-ignore
-            tx.executeSql("SELECT * FROM activities WHERE id=?",
-                [bestId],
-                (txObj: any, resultSet1: any) => {
-
-                    db.transaction((tx) => {
-                        tx.executeSql("SELECT * FROM points WHERE activity_id=? ORDER BY num ASC",
-                            [bestId],
-                            (txObj: any, resultSet2: any) => {
-
-                                best = {
-                                    id: resultSet1.rows._array[0].id,
-                                    start: resultSet1.rows._array[0].start,
-                                    end: resultSet1.rows._array[0].end,
-                                    distance: resultSet1.rows._array[0].distance,
-                                    points: resultSet2.rows._array
-                                };
-
-                                resolve(best); // Zwraca najlepszą aktywność
-
-                            },// @ts-ignorer
-                            (txObj: any, error: any) => {
-                                reject(error);
-                            }
-                        );
-                    });
-
-                },// @ts-ignore
-                (txObj: any, error: any) => {
-                    reject(error);
-                }
-            );
-        });
+        if (metric > bestMetric) {
+            bestMetric = metric;
+            bestId = a.id;
+        }
     });
+
+    return bestId;
 };
