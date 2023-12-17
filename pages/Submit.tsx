@@ -25,7 +25,7 @@ const Submit = ({navigation}: any) => {
     return (
         <Wrapper navigation={navigation} title={"Overview"}>
             <View
-                style={{height: "79.1%", paddingHorizontal: "3%"}}
+                style={{height: "79.3%", paddingHorizontal: "3%"}}
             >
 
 
