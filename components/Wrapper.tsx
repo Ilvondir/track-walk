@@ -2,6 +2,7 @@ import React, {ReactNode} from 'react';
 import {StyleSheet, View} from "react-native";
 import Header from "./Header";
 import Navbar from "./Navbar";
+import {StatusBar} from "expo-status-bar";
 
 const Wrapper = (props: { navigation: any, children: ReactNode, title: string }) => {
     const navigation = props.navigation;
@@ -13,6 +14,8 @@ const Wrapper = (props: { navigation: any, children: ReactNode, title: string })
             {props.children}
 
             <Navbar navigation={navigation}/>
+
+            <StatusBar style={"dark"}/>
         </View>
     );
 };
