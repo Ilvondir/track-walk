@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#FF474C",
         height: "8%",
         paddingHorizontal: 15,
-        marginTop: 37,
+        marginTop: "10%",
         flexDirection: "row",
         width: "100%"
     },

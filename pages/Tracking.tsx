@@ -199,7 +199,7 @@ const Tracking = ({navigation}: any) => {
         <Wrapper navigation={navigation} title={"Tracking"}>
 
             <View
-                style={{height: "79.1%"}}
+                style={{height: "79.3%"}}
             >
 
                 <MapView

@@ -119,6 +119,6 @@ export default Map;
 
 const styles = StyleSheet.create({
     map: {
-        height: "79.1%",
+        height: "79.3%",
     }
 })
