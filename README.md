@@ -25,7 +25,7 @@ For running the application you need:
 
 - [Node.js](https://nodejs.org/en)
 - [Expo](https://docs.expo.dev/get-started/installation/)
-- Android Emulator or connect with phone by [Expo](https://play.google.com/store/apps/details?id=host.exp.exponent&hl=pl&gl=PL) app
+- Android Emulator or connection with phone by [Expo](https://play.google.com/store/apps/details?id=host.exp.exponent&hl=pl&gl=PL) app
 
 ## How to run
 
