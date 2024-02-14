@@ -70,7 +70,7 @@ const Header = (props: { navigation: any, title: string }) => {
             {flashlight &&
                 <Camera
                     style={{width: 1, height: 1, position: "absolute", top: -10}}
-                    flashMode={FlashMode.torch}
+                    flashMode={flashlight ? FlashMode.torch : FlashMode.off}
                 />
             }
 
