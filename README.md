@@ -4,6 +4,7 @@ Application for recording and measuring walks TrackWalk is a mobile application 
 
 Saved walks are stored in a local database and are written and drawn on the application's home screen and on the map screen. Users can delete activities at their discretion. When attempting to delete an activity, the app (if such security methods are used on the device) requires authorization via a fingerprint or face scanner. Moreover, the application also allows you to view aggregate statistics of recorded activities and overlay all routes on one map for a clear overview of the most frequently visited areas.
 
+The project was created to fulfill the requirements of the university course Mobile Device Programming in the Computer Science degree. The project received a grade of 5.0 on a scale from 2 to 5.
 
 ## Used Tools
 - TypeScript 5.1.3
